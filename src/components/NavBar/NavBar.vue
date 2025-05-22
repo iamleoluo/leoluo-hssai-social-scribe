@@ -6,12 +6,12 @@ import NavLink from '@/components/NavBar/NavLink.vue'
 const navbarLinks = [
   {
     to: '/',
-    name: 'v1'
-  },
-  {
-    to: '/v3',
-    name: 'v3'
+    name: 'Home'
   }
+  // {
+  //   to: '/v3',
+  //   name: 'v3'
+  // }
 ]
 
 const menuOpen = ref<Boolean>(false)
