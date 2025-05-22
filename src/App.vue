@@ -10,10 +10,7 @@ import Toast from 'primevue/toast'
     <NavBar />
   </header>
   <!-- The padding-top has been offsetted by 32px -->
-  <main
-    class="pt-[64px] md:pt-[60px] bg-white"
-    :class="$route.name === 'home' ? 'h-dvh' : 'min-h-dvh'"
-  >
+  <main class="pt-[64px] md:pt-[60px] bg-white min-h-dvh">
     <RouterView />
   </main>
   <AppFooter />

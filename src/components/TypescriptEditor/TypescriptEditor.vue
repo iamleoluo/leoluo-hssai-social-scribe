@@ -185,7 +185,7 @@ ${transcript}
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4',
+        model: 'gpt-4o-mini-2024-07-18',
         messages: [
           { role: 'system', content: '你是一位熟悉家事報告撰寫的社工人員助手' },
           { role: 'user', content: fullPrompt }

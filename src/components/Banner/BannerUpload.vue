@@ -85,7 +85,7 @@ const correctTranscriptWithOpenAI = async (transcript: string) => {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'gpt-4',
+      model: 'gpt-4o-mini-2024-07-18',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: transcript }
@@ -117,15 +117,19 @@ const handleAudioUpload = async (event: Event) => {
 
   try {
     const formData = new FormData()
-    formData.append('audio', file, file.name || 'recording.webm')
+    formData.append('file', file) // audioFile 是您要上傳的音訊檔案，例如從 <input type="file"> 取得
+    formData.append('model', 'whisper-1') // 指定使用的模型
+    formData.append('response_format', 'text') // 回應格式為純文字
 
-    const response = await fetch(`${apiClient.defaults.baseURL}/transcribe`, {
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}` // 將 YOUR_API_KEY 替換為您的 OpenAI API 金鑰
+      },
       body: formData
     })
 
-    const data = await response.json()
-    const transcript = data.text?.trim()
+    const transcript = await response.text()
 
     if (!transcript) throw new Error('轉錄結果為空')
     store.setTranscriptText(transcript)
