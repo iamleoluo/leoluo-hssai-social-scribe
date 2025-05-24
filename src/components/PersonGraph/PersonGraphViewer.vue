@@ -1,19 +1,28 @@
 <template>
   <div>
-    <label class="font-semibold">人物關係圖 JSON 檢視：</label>
-    <pre class="bg-gray-100 p-2 rounded overflow-x-auto text-sm min-h-[100px]">{{ prettyJson }}</pre>
+    <div v-if="!json || !json.trim()" class="text-gray-400">（尚未有資料）</div>
+    <div v-else-if="!isValidJson">
+      <div class="text-red-500">JSON 格式錯誤，請檢查內容！</div>
+      <pre class="bg-gray-100 p-2 rounded overflow-x-auto text-sm">{{ json }}</pre>
+    </div>
+    <div v-else>
+      <VisNetworkGraph :graphJson="json" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import VisNetworkGraph from './vis-network/VisNetworkGraph.vue'
 const props = defineProps<{ json: string }>()
-const prettyJson = computed(() => {
-  if (!props.json) return '（尚未有資料）'
+
+const isValidJson = computed(() => {
+  if (!props.json) return false
   try {
-    return JSON.stringify(JSON.parse(props.json), null, 2)
+    JSON.parse(props.json)
+    return true
   } catch {
-    return 'JSON 格式錯誤，請檢查內容！'
+    return false
   }
 })
 </script>

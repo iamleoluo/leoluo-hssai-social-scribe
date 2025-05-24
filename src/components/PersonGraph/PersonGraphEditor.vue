@@ -84,7 +84,7 @@ async function generateGraph() {
     const reader = response.body.getReader()
     const decoder = new TextDecoder('utf-8')
     let buffer = ''
-    let content = ''
+    let lastContent = ''
     while (true) {
       const { value, done } = await reader.read()
       if (done) break
@@ -95,13 +95,14 @@ async function generateGraph() {
         if (!line.trim()) continue
         try {
           const obj = JSON.parse(line)
-          content += obj.content
+          // 只保留最後一個 content
+          lastContent = obj.content
         } catch (e) {
           // 忽略解析錯誤
         }
       }
     }
-    jsonText.value = content
+    jsonText.value = lastContent
   } catch (err) {
     alert('生成失敗: ' + err)
   } finally {
