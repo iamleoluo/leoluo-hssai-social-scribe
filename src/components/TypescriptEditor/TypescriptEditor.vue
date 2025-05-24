@@ -120,7 +120,7 @@ const generateReportStream = async (template: string) => {
   sessionStore.activeTabIndex = 1
 
   try {
-    const response = await fetch('http://127.0.0.1:5050/run', {
+    const response = await fetch('/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: transcript })

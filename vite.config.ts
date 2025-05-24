@@ -38,5 +38,11 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  server: {
+    proxy: {
+      '/PersonGraph': 'http://127.0.0.1:5050',
+      '/run': 'http://127.0.0.1:5050'
+    }
   }
 })
