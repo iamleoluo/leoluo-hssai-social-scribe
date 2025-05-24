@@ -42,6 +42,9 @@
             <ReportEditor />
           </div>
         </template>
+        <template #person-graph-tab>
+          <PersonGraphEditor />
+        </template>
       </DashboardPanel>
     </div>
   </div>
@@ -58,6 +61,7 @@ import { useSessionStore } from '@/stores/useSessionStore'
 import { useConfirm } from 'primevue/useconfirm'
 import ConfirmPopup from 'primevue/confirmpopup'
 import { useToast } from 'primevue/usetoast'
+import PersonGraphEditor from '../components/PersonGraph/PersonGraphEditor.vue'
 const sessionStore = useSessionStore()
 const dashboardRef = ref<HTMLElement | null>(null)
 const confirm = useConfirm()

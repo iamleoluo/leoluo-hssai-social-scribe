@@ -42,6 +42,9 @@ const sessionStore = useSessionStore()
       <TabPanel header="報告初稿" :disabled="sessionStore.reportStage === 'idle'">
         <slot name="ai-doc-tab" />
       </TabPanel>
+      <TabPanel header="人物關係圖">
+        <slot name="person-graph-tab" />
+      </TabPanel>
     </TabView>
   </div>
 </template>
