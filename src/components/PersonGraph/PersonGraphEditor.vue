@@ -1,6 +1,6 @@
 <template>
   <div class="w-full max-w-3xl mx-auto p-4">
-    <h2 class="text-lg font-bold mb-2">人物關係圖生成器</h2>
+    <h2 class="text-lg font-bold mb-2">人物關係圖</h2>
     <textarea
       v-model="transcript"
       class="w-full border rounded p-2 mb-2"
@@ -84,7 +84,7 @@ async function generateGraph() {
     const reader = response.body.getReader()
     const decoder = new TextDecoder('utf-8')
     let buffer = ''
-    let lastContent = ''
+    let content = ''
     while (true) {
       const { value, done } = await reader.read()
       if (done) break
@@ -95,14 +95,13 @@ async function generateGraph() {
         if (!line.trim()) continue
         try {
           const obj = JSON.parse(line)
-          // 只保留最後一個 content
-          lastContent = obj.content
+          content += obj.content // 累加所有 content
         } catch (e) {
           // 忽略解析錯誤
         }
       }
     }
-    jsonText.value = lastContent
+    jsonText.value = content
   } catch (err) {
     alert('生成失敗: ' + err)
   } finally {
@@ -128,10 +127,12 @@ function downloadJson() {
 }
 
 function renderGraph() {
-  // 初期只顯示 JSON，之後可接 Vis.js
+  // 只做格式校驗和提示，圖形會自動刷新
   try {
-    const obj = JSON.parse(jsonText.value)
-    renderResult.value = JSON.stringify(obj, null, 2)
+    JSON.parse(jsonText.value)
+    renderResult.value = '格式正確，已嘗試渲染圖形'
+    // 強制觸發 Vue 更新（可選）
+    jsonText.value = jsonText.value
   } catch (e) {
     renderResult.value = 'JSON 格式錯誤，請檢查內容！'
   }
