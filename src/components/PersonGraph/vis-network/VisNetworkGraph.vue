@@ -21,7 +21,7 @@ function renderGraph(jsonStr: string) {
     const nodes = new DataSet<Node>(data.nodes)
     const edges = new DataSet<Edge>(
       data.edges.map((e: any) => ({
-        from: e.from_,
+        from: e.from,
         to: e.to,
         label: e.label,
         arrows: 'to'

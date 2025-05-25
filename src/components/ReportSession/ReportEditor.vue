@@ -27,9 +27,14 @@ import { computed } from 'vue'
 import Message from 'primevue/message'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { reportStageMessageMap, templateMessageMap } from '@/utils/stageMessages'
+
 const sessionStore = useSessionStore()
 const stageMessage = computed(() => reportStageMessageMap[sessionStore.reportStage])
-const templateMessages = computed(() => templateMessageMap[sessionStore.selectedTemplate])
+const templateMessages = computed(() => {
+  const template = sessionStore.selectedTemplate as keyof typeof templateMessageMap
+  return templateMessageMap[template] || []
+})
+
 const download = () => {
   const text = sessionStore.reportText.trim()
   if (!text) {

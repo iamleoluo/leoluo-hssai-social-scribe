@@ -83,6 +83,11 @@ import SplitButton from 'primevue/splitbutton'
 const sessionStore = useSessionStore()
 const stageMessage = computed(() => transcriptStageMessageMap[sessionStore.transcriptStage])
 
+// 初始化會話ID
+onMounted(() => {
+  sessionStore.initializeSession()
+})
+
 const splitButtonRef = ref<InstanceType<typeof SplitButton> | null>(null)
 
 const openMenu = () => {
@@ -123,7 +128,10 @@ const generateReportStream = async (template: string) => {
     const response = await fetch('/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: transcript })
+      body: JSON.stringify({ 
+        text: transcript,
+        sessionId: sessionStore.sessionId  // 傳送會話ID
+      })
     })
     if (!response.body) {
       sessionStore.setReportStage('done')
@@ -149,10 +157,68 @@ const generateReportStream = async (template: string) => {
       }
     }
     sessionStore.setReportStage('done')
+    
+    // 報告生成完成後，如果啟用自動生成人物關係圖，則自動觸發
+    if (sessionStore.autoGeneratePersonGraph) {
+      await generatePersonGraphFromReport()
+    }
   } catch (err) {
     console.error('生成報告失敗', err)
     sessionStore.setReportText('[生成失敗，請稍後再試]')
     sessionStore.setReportStage('done')
+  }
+}
+
+// 新增：從報告自動生成人物關係圖
+const generatePersonGraphFromReport = async () => {
+  const reportText = sessionStore.reportText?.trim()
+  if (!reportText) {
+    console.warn('沒有報告內容，無法生成人物關係圖')
+    return
+  }
+
+  sessionStore.setPersonGraphStage('generating')
+  sessionStore.setPersonGraphJson('') // 清空
+
+  try {
+    const response = await fetch('/PersonGraph', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        text: reportText,  // 使用報告內容而不是逐字稿
+        sessionId: sessionStore.sessionId
+      })
+    })
+    if (!response.body) {
+      sessionStore.setPersonGraphStage('done')
+      return
+    }
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+    let content = ''
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      let lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+      for (const line of lines) {
+        if (!line.trim()) continue
+        try {
+          const obj = JSON.parse(line)
+          content += obj.content // 累加所有 content
+        } catch (e) {
+          // 忽略解析錯誤
+        }
+      }
+    }
+    sessionStore.setPersonGraphJson(content)
+    sessionStore.setPersonGraphStage('done')
+    console.log('人物關係圖自動生成完成')
+  } catch (err) {
+    console.error('生成人物關係圖失敗', err)
+    sessionStore.setPersonGraphStage('done')
   }
 }
 
