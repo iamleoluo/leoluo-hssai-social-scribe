@@ -56,7 +56,6 @@ import { ref, computed } from 'vue'
 import bgUrl from '@/assets/banner-background-img.png'
 import { useSessionStore } from '../../stores/useSessionStore'
 import apiClient from '@/api/axiosClient'
-import { handleAudioUpload } from '@/utils/handleAudioUpload'
 
 const props = defineProps<{
   scrollTarget: HTMLElement | null
@@ -117,14 +116,14 @@ const handleAudioUpload = async (event: Event) => {
 
   try {
     const formData = new FormData()
-    formData.append('file', file) // audioFile 是您要上傳的音訊檔案，例如從 <input type="file"> 取得
-    formData.append('model', 'whisper-1') // 指定使用的模型
-    formData.append('response_format', 'text') // 回應格式為純文字
+    formData.append('file', file)
+    formData.append('model', 'whisper-1')
+    formData.append('response_format', 'text')
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}` // 將 YOUR_API_KEY 替換為您的 OpenAI API 金鑰
+        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
       },
       body: formData
     })
@@ -134,7 +133,6 @@ const handleAudioUpload = async (event: Event) => {
     if (!transcript) throw new Error('轉錄結果為空')
     store.setTranscriptText(transcript)
 
-    // ✅ 接著送給 OpenAI 做校正
     await correctTranscriptWithOpenAI(transcript)
     scrollToEditor()
   } catch (e) {
@@ -161,7 +159,7 @@ const handleTranscriptUpload = (event: Event) => {
       console.error('讀取逐字稿檔案失敗')
     }
 
-    reader.readAsText(file, 'utf-8') // 可改成 'big5' 等編碼
+    reader.readAsText(file, 'utf-8')
   }
 }
 </script>

@@ -77,11 +77,21 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import Message from 'primevue/message'
 import { useSessionStore } from '@/stores/useSessionStore'
+import { storeToRefs } from 'pinia'
 import { transcriptStageMessageMap } from '@/utils/stageMessages'
 import SplitButton from 'primevue/splitbutton'
 
 const sessionStore = useSessionStore()
-const stageMessage = computed(() => transcriptStageMessageMap[sessionStore.transcriptStage])
+const { 
+  transcriptStage, 
+  transcriptText, 
+  reportText, 
+  sessionId, 
+  activeTabIndex, 
+  autoGeneratePersonGraph 
+} = storeToRefs(sessionStore)
+
+const stageMessage = computed(() => transcriptStageMessageMap[transcriptStage.value])
 
 // 初始化會話ID
 onMounted(() => {
@@ -115,14 +125,14 @@ const templateOptions = templates.map((template) => ({
 
 const generateReportStream = async (template: string) => {
   sessionStore.setSelectedTemplate(template)
-  const transcript = sessionStore.transcriptText?.trim()
+  const transcript = transcriptText.value?.trim()
   if (!transcript) {
     alert('目前尚未有逐字稿內容')
     return
   }
   sessionStore.setReportStage('generating')
   sessionStore.setReportText('') // 清空
-  sessionStore.activeTabIndex = 1
+  activeTabIndex.value = 1
 
   try {
     const response = await fetch('/run', {
@@ -130,7 +140,7 @@ const generateReportStream = async (template: string) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         text: transcript,
-        sessionId: sessionStore.sessionId  // 傳送會話ID
+        sessionId: sessionId.value  // 傳送會話ID
       })
     })
     if (!response.body) {
@@ -150,7 +160,7 @@ const generateReportStream = async (template: string) => {
         if (!line.trim()) continue
         try {
           const obj = JSON.parse(line)
-          sessionStore.setReportText(sessionStore.reportText + obj.content)
+          sessionStore.setReportText(reportText.value + obj.content)
         } catch (e) {
           // 可加錯誤處理
         }
@@ -159,7 +169,7 @@ const generateReportStream = async (template: string) => {
     sessionStore.setReportStage('done')
     
     // 報告生成完成後，如果啟用自動生成人物關係圖，則自動觸發
-    if (sessionStore.autoGeneratePersonGraph) {
+    if (autoGeneratePersonGraph.value) {
       await generatePersonGraphFromReport()
     }
   } catch (err) {
@@ -171,8 +181,8 @@ const generateReportStream = async (template: string) => {
 
 // 新增：從報告自動生成人物關係圖
 const generatePersonGraphFromReport = async () => {
-  const reportText = sessionStore.reportText?.trim()
-  if (!reportText) {
+  const reportTextValue = reportText.value?.trim()
+  if (!reportTextValue) {
     console.warn('沒有報告內容，無法生成人物關係圖')
     return
   }
@@ -185,8 +195,8 @@ const generatePersonGraphFromReport = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        text: reportText,  // 使用報告內容而不是逐字稿
-        sessionId: sessionStore.sessionId
+        text: reportTextValue,  // 使用報告內容而不是逐字稿
+        sessionId: sessionId.value
       })
     })
     if (!response.body) {
@@ -223,7 +233,7 @@ const generatePersonGraphFromReport = async () => {
 }
 
 const download = () => {
-  const text = sessionStore.transcriptText.trim()
+  const text = transcriptText.value.trim()
   if (!text) {
     alert('沒有可下載的內容')
     return

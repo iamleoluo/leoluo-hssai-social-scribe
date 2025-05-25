@@ -26,17 +26,20 @@
 import { computed } from 'vue'
 import Message from 'primevue/message'
 import { useSessionStore } from '@/stores/useSessionStore'
+import { storeToRefs } from 'pinia'
 import { reportStageMessageMap, templateMessageMap } from '@/utils/stageMessages'
 
 const sessionStore = useSessionStore()
-const stageMessage = computed(() => reportStageMessageMap[sessionStore.reportStage])
+const { reportText, reportStage, selectedTemplate } = storeToRefs(sessionStore)
+
+const stageMessage = computed(() => reportStageMessageMap[reportStage.value])
 const templateMessages = computed(() => {
-  const template = sessionStore.selectedTemplate as keyof typeof templateMessageMap
+  const template = selectedTemplate.value as keyof typeof templateMessageMap
   return templateMessageMap[template] || []
 })
 
 const download = () => {
-  const text = sessionStore.reportText.trim()
+  const text = reportText.value.trim()
   if (!text) {
     alert('沒有可下載的內容')
     return

@@ -1,16 +1,18 @@
 import { useSessionStore } from '@/stores/useSessionStore'
+import { storeToRefs } from 'pinia'
 
 /**
  * 會話管理工具類
  */
 export class SessionManager {
   private store = useSessionStore()
+  private storeRefs = storeToRefs(this.store)
 
   /**
    * 清理後端會話文件
    */
   async cleanupBackendSession(sessionId?: string): Promise<boolean> {
-    const id = sessionId || this.store.sessionId
+    const id = sessionId || this.storeRefs.sessionId.value
     if (!id) return false
 
     try {
@@ -29,11 +31,11 @@ export class SessionManager {
    * 完全清理會話（前端 + 後端）
    */
   async clearSession(): Promise<void> {
-    const sessionId = this.store.sessionId
+    const sessionIdValue = this.storeRefs.sessionId.value
     
     // 清理後端文件
-    if (sessionId) {
-      await this.cleanupBackendSession(sessionId)
+    if (sessionIdValue) {
+      await this.cleanupBackendSession(sessionIdValue)
     }
     
     // 清理前端狀態
@@ -51,15 +53,15 @@ export class SessionManager {
   /**
    * 檢查會話是否有內容
    */
-  hasContent(): boolean {
-    return this.store.hasUploaded
+  hasUploaded(): boolean {
+    return this.storeRefs.hasUploaded.value
   }
 
   /**
    * 獲取當前會話ID
    */
   getSessionId(): string {
-    return this.store.sessionId
+    return this.storeRefs.sessionId.value
   }
 
   /**

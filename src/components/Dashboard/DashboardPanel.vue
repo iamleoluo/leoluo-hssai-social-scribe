@@ -4,8 +4,10 @@ import TabPanel from 'primevue/tabpanel'
 
 // import { useProjectStore } from '@/stores/projectStore'
 import { useSessionStore } from '@/stores/useSessionStore'
+import { storeToRefs } from 'pinia'
 // const projectStore = useProjectStore()
 const sessionStore = useSessionStore()
+const { activeTabIndex, reportStage } = storeToRefs(sessionStore)
 </script>
 
 <template>
@@ -13,7 +15,7 @@ const sessionStore = useSessionStore()
     <slot name="project-header"></slot>
 
     <TabView
-      v-model:activeIndex="sessionStore.activeTabIndex"
+      v-model:activeIndex="activeTabIndex"
       :pt="{
         tabpanel: {
           headerAction: ({ parent, context, props }) => ({
@@ -39,7 +41,7 @@ const sessionStore = useSessionStore()
         <slot name="transcript-tab" />
       </TabPanel>
       <!--<TabPanel header="報告初稿" :disabled="!projectStore.tempAiDocument?.trim()">-->
-      <TabPanel header="報告初稿" :disabled="sessionStore.reportStage === 'idle'">
+      <TabPanel header="報告初稿" :disabled="reportStage === 'idle'">
         <slot name="ai-doc-tab" />
       </TabPanel>
       <TabPanel header="人物關係圖(Beta)">

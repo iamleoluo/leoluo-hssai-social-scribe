@@ -1,109 +1,124 @@
 import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 
-export const useSessionStore = defineStore('session', {
-  state: () => ({
-    // 用戶識別
-    sessionId: '',
-    
-    // 原有狀態
-    audioFile: null as File | null,
-    transcriptFile: null as File | null,
-    transcriptText: '',
-    reportText: '',
-    hasSubmitted: false,
-    transcriptStage: 'idle' as 'idle' | 'transcribing' | 'correcting' | 'done',
-    reportStage: 'idle' as 'idle' | 'generating' | 'done',
-    activeTabIndex: 0,
-    selectedTemplate: '',
-    
-    // 新增：人物關係圖狀態
-    personGraphJson: '',
-    personGraphStage: 'idle' as 'idle' | 'generating' | 'done',
-    
-    // 新增：自動工作流程設定
-    autoGeneratePersonGraph: true
-  }),
-  getters: {
-    hasUploaded: (state: any) => {
-      return (
-        !!state.audioFile || !!state.transcriptFile || !!state.transcriptText || !!state.reportText
-      )
-    },
-    hasTypescript: (state: any) => !!state.transcriptText,
-    hasReport: (state: any) => !!state.reportText,
-    hasPersonGraph: (state: any) => !!state.personGraphJson
-  },
-  actions: {
-    // 初始化會話ID
-    initializeSession() {
-      if (!this.sessionId) {
-        this.sessionId = uuidv4()
-      }
-    },
-    
-    // 原有 actions
-    setSelectedTemplate(template: string) {
-      this.selectedTemplate = template
-    },
-    setActiveTab(index: number) {
-      this.activeTabIndex = index
-    },
-    setTranscriptStage(stage: 'idle' | 'transcribing' | 'correcting' | 'done') {
-      this.transcriptStage = stage
-    },
-    setReportStage(stage: 'idle' | 'generating' | 'done') {
-      this.reportStage = stage
-    },
-    setAudioFile(file: File) {
-      this.audioFile = file
-    },
-    setTranscriptFile(file: File) {
-      this.transcriptFile = file
-    },
-    setTranscriptText(text: string) {
-      this.transcriptText = text
-    },
-    setReportText(text: string) {
-      this.reportText = text
-    },
-    markSubmitted() {
-      this.hasSubmitted = true
-    },
-    
-    // 新增：人物關係圖相關 actions
-    setPersonGraphJson(json: string) {
-      this.personGraphJson = json
-    },
-    setPersonGraphStage(stage: 'idle' | 'generating' | 'done') {
-      this.personGraphStage = stage
-    },
-    setAutoGeneratePersonGraph(auto: boolean) {
-      this.autoGeneratePersonGraph = auto
-    },
-    
-    // 重置功能
-    reset() {
-      this.audioFile = null
-      this.transcriptFile = null
-      this.transcriptText = ''
-      this.reportText = ''
-      this.reportStage = 'idle'
-      this.transcriptStage = 'idle'
-      this.activeTabIndex = 0
-      this.selectedTemplate = ''
-      this.personGraphJson = ''
-      this.personGraphStage = 'idle'
-      // 保留 sessionId，不重置
-      localStorage.removeItem('pinia')
-    },
-    
-    // 清除會話（完全重置，包含 sessionId）
-    clearSession() {
-      this.sessionId = ''
-      this.reset()
-    }
-  },
+export const useSessionStore = defineStore('session', () => {
+  // state
+  const sessionId = ref('')
+  const audioFile = ref<File | null>(null)
+  const transcriptFile = ref<File | null>(null)
+  const transcriptText = ref('')
+  const reportText = ref('')
+  const hasSubmitted = ref(false)
+  const transcriptStage = ref<'idle' | 'transcribing' | 'correcting' | 'done'>('idle')
+  const reportStage = ref<'idle' | 'generating' | 'done'>('idle')
+  const activeTabIndex = ref(0)
+  const selectedTemplate = ref('')
+  const personGraphJson = ref('')
+  const personGraphStage = ref<'idle' | 'generating' | 'done'>('idle')
+  const autoGeneratePersonGraph = ref(true)
+
+  // getters
+  const hasUploaded = computed(() =>
+    !!audioFile.value || !!transcriptFile.value || !!transcriptText.value || !!reportText.value
+  )
+  const hasTypescript = computed(() => !!transcriptText.value)
+  const hasReport = computed(() => !!reportText.value)
+  const hasPersonGraph = computed(() => !!personGraphJson.value)
+
+  // actions
+  function initializeSession() {
+    if (!sessionId.value) sessionId.value = uuidv4()
+  }
+  function setSelectedTemplate(template: string) {
+    selectedTemplate.value = template
+  }
+  function setActiveTab(index: number) {
+    activeTabIndex.value = index
+  }
+  function setTranscriptStage(stage: 'idle' | 'transcribing' | 'correcting' | 'done') {
+    transcriptStage.value = stage
+  }
+  function setReportStage(stage: 'idle' | 'generating' | 'done') {
+    reportStage.value = stage
+  }
+  function setAudioFile(file: File) {
+    audioFile.value = file
+  }
+  function setTranscriptFile(file: File) {
+    transcriptFile.value = file
+  }
+  function setTranscriptText(text: string) {
+    transcriptText.value = text
+  }
+  function setReportText(text: string) {
+    reportText.value = text
+  }
+  function markSubmitted() {
+    hasSubmitted.value = true
+  }
+  function setPersonGraphJson(json: string) {
+    personGraphJson.value = json
+  }
+  function setPersonGraphStage(stage: 'idle' | 'generating' | 'done') {
+    personGraphStage.value = stage
+  }
+  function setAutoGeneratePersonGraph(auto: boolean) {
+    autoGeneratePersonGraph.value = auto
+  }
+  function reset() {
+    audioFile.value = null
+    transcriptFile.value = null
+    transcriptText.value = ''
+    reportText.value = ''
+    reportStage.value = 'idle'
+    transcriptStage.value = 'idle'
+    activeTabIndex.value = 0
+    selectedTemplate.value = ''
+    personGraphJson.value = ''
+    personGraphStage.value = 'idle'
+    localStorage.removeItem('pinia')
+  }
+  function clearSession() {
+    sessionId.value = ''
+    reset()
+  }
+
+  return {
+    sessionId,
+    audioFile,
+    transcriptFile,
+    transcriptText,
+    reportText,
+    hasSubmitted,
+    transcriptStage,
+    reportStage,
+    activeTabIndex,
+    selectedTemplate,
+    personGraphJson,
+    personGraphStage,
+    autoGeneratePersonGraph,
+    hasUploaded,
+    hasTypescript,
+    hasReport,
+    hasPersonGraph,
+    initializeSession,
+    setSelectedTemplate,
+    setActiveTab,
+    setTranscriptStage,
+    setReportStage,
+    setAudioFile,
+    setTranscriptFile,
+    setTranscriptText,
+    setReportText,
+    markSubmitted,
+    setPersonGraphJson,
+    setPersonGraphStage,
+    setAutoGeneratePersonGraph,
+    reset,
+    clearSession
+  }
+}, {
   persist: {
     storage: localStorage,
     paths: ['sessionId', 'transcriptText', 'reportText', 'selectedTemplate', 'activeTabIndex', 'personGraphJson', 'autoGeneratePersonGraph']
