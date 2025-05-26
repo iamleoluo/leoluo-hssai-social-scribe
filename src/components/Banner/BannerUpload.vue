@@ -16,6 +16,18 @@
       <h1 class="text-3xl font-bold mb-2">社工專屬的智慧報告助手</h1>
       <p class="text-lg mb-6">支援錄音上傳與逐字稿產出，AI自動生成訪視報告，效率再升級。</p>
 
+      <!-- 使用說明小按鈕，置中顯示（改為純文字+icon） -->
+      <div class="flex justify-center mb-2 w-full">
+        <span
+          class="flex items-center gap-1 px-2 py-1 rounded text-purple-700 border border-purple-700 bg-white hover:bg-purple-50 font-medium shadow-sm cursor-pointer select-none text-sm"
+          style="min-width: 32px; min-height: 32px;"
+          @click="showGuide = true"
+        >
+          <i class="pi pi-question-circle text-base"></i>
+          <span>使用說明</span>
+        </span>
+      </div>
+
       <div class="space-x-4 flex">
         <input
           type="file"
@@ -48,6 +60,9 @@
         </button>
       </div>
     </div>
+
+    <!-- 使用說明 Dialog -->
+    <UserGuideDialog v-model="showGuide" />
   </section>
 </template>
 
@@ -56,6 +71,7 @@ import { ref, computed } from 'vue'
 import bgUrl from '@/assets/banner-background-img.png'
 import { useSessionStore } from '../../stores/useSessionStore'
 import apiClient from '@/api/axiosClient'
+import UserGuideDialog from './UserGuideDialog.vue'
 
 const props = defineProps<{
   scrollTarget: HTMLElement | null
@@ -67,6 +83,7 @@ const scrollToEditor = () => {
 
 const audioInput = ref<HTMLInputElement | null>(null)
 const textInput = ref<HTMLInputElement | null>(null)
+const showGuide = ref(false)
 const store = useSessionStore()
 
 const triggerAudioInput = () => audioInput.value?.click()
