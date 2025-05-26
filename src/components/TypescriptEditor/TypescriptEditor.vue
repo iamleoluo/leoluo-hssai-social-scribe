@@ -135,7 +135,7 @@ const generateReportStream = async (template: string) => {
   activeTabIndex.value = 1
 
   try {
-    const response = await fetch('/run', {
+    const response = await fetch('/api/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -191,7 +191,7 @@ const generatePersonGraphFromReport = async () => {
   sessionStore.setPersonGraphJson('') // 清空
 
   try {
-    const response = await fetch('/PersonGraph', {
+    const response = await fetch('/api/PersonGraph', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 

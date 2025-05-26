@@ -41,8 +41,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/PersonGraph': 'http://127.0.0.1:5353',
-      '/run': 'http://127.0.0.1:5353'
+      '/api': 'http://127.0.0.1:5353'
     }
   }
 })

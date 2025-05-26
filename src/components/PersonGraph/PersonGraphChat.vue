@@ -141,7 +141,7 @@ async function sendMessage() {
   isLoading.value = true
   
   try {
-    const response = await fetch('/PersonGraphChat', {
+    const response = await fetch('/api/PersonGraphChat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

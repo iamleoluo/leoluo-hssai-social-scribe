@@ -124,7 +124,7 @@ async function generateGraph() {
   renderResult.value = ''
   
   try {
-    const response = await fetch('/PersonGraph', {
+    const response = await fetch('/api/PersonGraph', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
