@@ -42,6 +42,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://127.0.0.1:5353'
-    }
+    },
+    allowedHosts: ['hssai-socialworker.phys.nthu.edu.tw'],
+    host: '0.0.0.0'
   }
 })
