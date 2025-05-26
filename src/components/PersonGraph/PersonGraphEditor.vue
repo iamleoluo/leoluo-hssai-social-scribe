@@ -8,7 +8,7 @@
         <button
           @click="editMode = 'auto'"
           :class="[
-            'px-4 py-2 rounded-lg',
+            'px-4 py-2 rounded-lg flex items-center gap-2 shadow transition hover:scale-105',
             editMode === 'auto' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
           ]"
         >
@@ -17,7 +17,7 @@
         <button
           @click="editMode = 'manual'"
           :class="[
-            'px-4 py-2 rounded-lg',
+            'px-4 py-2 rounded-lg flex items-center gap-2 shadow transition hover:scale-105',
             editMode === 'manual' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
           ]"
         >
@@ -41,10 +41,11 @@
       ></textarea>
       <div class="mb-2">
         <button
-          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-800"
+          class="bg-amber-500 text-white px-4 py-2 rounded flex items-center gap-2 shadow hover:bg-amber-600 hover:scale-105 transition"
           :disabled="loading"
           @click="generateGraph"
         >
+          <img src="@/assets/add.png" alt="add" class="h-5 w-5" />
           {{ loading ? '生成中...' : '生成人物關係 JSON' }}
         </button>
       </div>
@@ -58,20 +59,28 @@
         ></textarea>
         <div class="flex space-x-2 mb-2">
           <button
-            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-800"
+            class="bg-green-500 text-white px-4 py-2 rounded flex items-center gap-2 shadow hover:bg-green-600 hover:scale-105 transition"
             :disabled="!jsonText"
             @click="copyJson"
-          >複製 JSON</button>
+          >
+            <img src="@/assets/document.png" alt="copy" class="h-5 w-5" />
+            複製 JSON
+          </button>
           <button
-            class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-800"
+            class="bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 shadow hover:bg-blue-700 hover:scale-105 transition"
             :disabled="!jsonText"
             @click="downloadJson"
-          >下載 JSON</button>
+          >
+            <img src="@/assets/downloads.png" alt="download" class="h-5 w-5" />
+            下載 JSON
+          </button>
           <button
-            class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-800"
+            class="bg-purple-500 text-white px-4 py-2 rounded flex items-center gap-2 shadow hover:bg-purple-700 hover:scale-105 transition"
             :disabled="!jsonText"
             @click="renderGraph"
-          >渲染</button>
+          >
+            渲染
+          </button>
         </div>
       </div>
       <div>
@@ -196,4 +205,4 @@ pre {
   white-space: pre-wrap;
   word-break: break-all;
 }
-</style> 
+</style>
