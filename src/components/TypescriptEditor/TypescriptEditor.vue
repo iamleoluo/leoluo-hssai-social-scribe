@@ -101,7 +101,7 @@ onMounted(() => {
 const splitButtonRef = ref<InstanceType<typeof SplitButton> | null>(null)
 
 const openMenu = () => {
-  const menuBtn = splitButtonRef.value?.$el?.querySelector(
+  const menuBtn = (splitButtonRef.value as any)?.$el?.querySelector(
     '[data-pc-name="menubutton"]'
   ) as HTMLElement
 
@@ -113,7 +113,12 @@ const openMenu = () => {
   }
 }
 
-const templates = ['司法社工家庭訪視模板']
+const templates = [
+  '士林地院家事服務中心格式(ChatGPT)',
+  '士林地院家事服務中心格式(Claude)',
+  '珍珠社會福利協會格式(ChatGPT)',
+  '珍珠社會福利協會格式(Claude)'
+]
 
 const templateOptions = templates.map((template) => ({
   label: template,
@@ -140,7 +145,8 @@ const generateReportStream = async (template: string) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         text: transcript,
-        sessionId: sessionId.value  // 傳送會話ID
+        template: template,  // 新增模板參數
+        sessionId: sessionId.value
       })
     })
     if (!response.body) {
