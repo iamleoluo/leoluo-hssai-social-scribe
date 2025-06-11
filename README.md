@@ -16,31 +16,31 @@
 ## ✨ 主要功能模組
 
 ### 1. 📝 逐字稿管理系統
-- **音檔上傳與播放**：支援多種音檔格式，內建音檔播放器
-- **智能轉錄**：整合語音轉文字 API，自動生成逐字稿
-- **逐字稿編輯**：所見即所得編輯器，支援即時編輯和格式化
-- **文件匯入匯出**：支援 TXT 檔案匯入，可匯出為多種格式
-- **版本控制**：自動儲存編輯歷程
+- **音檔上傳與播放**：支援音檔上傳，內建音檔播放器 (使用 WaveSurfer.js)
+- **逐字稿編輯**：文字區域編輯器，支援即時編輯
+- **文件匯入匯出**：支援直接文字輸入，可下載為 TXT 檔案
+- **自動儲存**：使用 Pinia 狀態管理，支援 localStorage 持久化
 
 ### 2. 📊 AI 報告生成系統
-- **智能分析**：基於逐字稿內容，AI 自動分析關鍵資訊
-- **報告模板**：支援多種社工報告模板，可客製化設定
-- **流式生成**：即時顯示 AI 生成過程，提升用戶體驗
-- **格式化輸出**：支援 PDF、Word 等多種格式匯出
-- **內容編輯**：生成後可進行人工修改和調整
+- **智能分析**：基於逐字稿內容，AI 自動分析並生成報告
+- **多腳本支援**：支援不同 Prompt 腳本的差異化呼叫方式
+- **報告模板**：支援 4 種預設模板，包含不同機構格式和 AI 模型選擇
+- **流式生成**：即時顯示 AI 生成過程，內容逐步累加顯示
+- **模板參數傳遞**：前端會根據選擇的模板傳送對應參數到後端
+- **內容編輯**：生成後的報告內容可進行編輯
 
 ### 3. 🕸️ 人物關係圖系統
-- **智能抽取**：AI 自動分析逐字稿中的人物關係
-- **視覺化呈現**：使用 Vis.js 繪製互動式關係圖
-- **關係編輯**：支援手動調整人物關係和屬性
-- **JSON 格式**：標準化的資料結構，便於後續處理
-- **圖表匯出**：支援匯出為圖片或 JSON 檔案
+- **智能抽取**：AI 自動分析文本中的人物關係，回傳 JSON 格式資料
+- **視覺化呈現**：使用 Vis.js 繪製關係圖 (VisNetworkGraph 組件)
+- **編輯模式**：支援智能對話編輯和手動編輯兩種模式
+- **JSON 操作**：支援 JSON 內容編輯、複製、下載
+- **自動生成**：可設定在報告生成後自動觸發人物關係圖生成
 
 ### 4. 🎛️ 工作台管理
-- **分頁式介面**：清晰的功能分區，提升操作效率
-- **狀態管理**：統一的會話狀態管理，支援斷點續傳
-- **自動儲存**：定期自動儲存工作進度
-- **批次處理**：支援多檔案批次處理功能
+- **分頁式介面**：三個主要分頁 - 逐字稿、AI 報告、人物關係圖
+- **狀態管理**：使用 Pinia 統一管理會話狀態，支援 localStorage 持久化
+- **檔案上傳**：支援音檔和逐字稿檔案上傳 (BannerUpload 組件)
+- **會話控制**：支援儲存和清除會話功能
 
 ---
 
@@ -236,41 +236,310 @@ VITE_DEBUG=true
 
 ### API 端點
 
+基於實際代碼分析，系統使用以下 API 端點：
+
 | 端點 | 方法 | 功能 | 參數 |
 |------|------|------|------|
-| `/api/transcript` | POST | 語音轉文字 | `{ audioFile: File }` |
-| `/api/generate-report` | POST | 生成報告 | `{ transcript: string, template: string }` |
-| `/api/person-graph` | POST | 生成人物關係圖 | `{ transcript: string }` |
-| `/api/save-session` | POST | 儲存會話 | `{ sessionData: object }` |
+| `/api/run` | POST | 生成報告 | `{ text: string, template: string, sessionId: string }` |
+| `/api/PersonGraph` | POST | 生成人物關係圖 | `{ text: string, sessionId: string }` |
 
 ### 流式資料處理
 
 系統支援 Server-Sent Events (SSE) 進行即時資料串流：
 
 ```typescript
-// 流式 API 呼叫範例
-const response = await fetch('/api/generate-report', {
+// 流式 API 呼叫範例 (基於實際代碼)
+const response = await fetch('/api/run', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ transcript, template })
+  body: JSON.stringify({ 
+    text: transcript,
+    template: template,
+    sessionId: sessionId
+  })
 })
 
 const reader = response.body?.getReader()
-const decoder = new TextDecoder()
+const decoder = new TextDecoder('utf-8')
+let buffer = ''
 
 while (true) {
-  const { done, value } = await reader.read()
+  const { value, done } = await reader.read()
   if (done) break
   
-  const chunk = decoder.decode(value)
-  // 處理接收到的資料塊
-  processStreamChunk(chunk)
+  buffer += decoder.decode(value, { stream: true })
+  let lines = buffer.split('\n')
+  buffer = lines.pop() || ''
+  
+  for (const line of lines) {
+    if (!line.trim()) continue
+    try {
+      const obj = JSON.parse(line)
+      // 累加內容
+      content += obj.content
+    } catch (e) {
+      // 忽略解析錯誤
+    }
+  }
 }
 ```
 
 ### 後端專案
 
 後端 API 請參考：[basic-backend-design-for-auto-generating-social-work-visit-reports-using-Docker](https://github.com/iamleoluo/basic-backend-design-for-auto-generating-social-work-visit-reports-using-Docker.git)
+
+---
+
+## 🔄 多腳本(Prompt)呼叫系統
+
+### 架構設計
+
+系統支援不同的 Prompt 腳本有不同的呼叫方式，透過模板選擇機制實現差異化處理：
+
+#### 前端模板配置
+```typescript
+// TypescriptEditor.vue 中的模板定義
+const templates = [
+  '士林地院家事服務中心格式(ChatGPT)',
+  '士林地院家事服務中心格式(Claude)',
+  '珍珠社會福利協會格式(ChatGPT)',
+  '珍珠社會福利協會格式(Claude)'
+]
+
+const templateOptions = templates.map((template) => ({
+  label: template,
+  command: () => {
+    sessionStore.setSelectedTemplate(template)
+    generateReportStream(template)  // 不同模板觸發不同處理
+  }
+}))
+```
+
+#### API 呼叫差異化
+```typescript
+// 不同模板會傳送不同的參數到後端
+const generateReportStream = async (template: string) => {
+  const response = await fetch('/api/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      text: transcript,
+      template: template,  // 關鍵：模板參數決定後端 Prompt 腳本
+      sessionId: sessionId.value
+    })
+  })
+  // ... 流式處理邏輯
+}
+```
+
+### 模板特色
+
+| 模板名稱 | 機構 | AI 模型 | 特色 |
+|---------|------|---------|------|
+| 士林地院家事服務中心格式(ChatGPT) | 士林地方法院 | ChatGPT | 法院標準格式，邏輯性強 |
+| 士林地院家事服務中心格式(Claude) | 士林地方法院 | Claude | 法院標準格式，語言更自然 |
+| 珍珠社會福利協會格式(ChatGPT) | 珍珠社會福利協會 | ChatGPT | 社福機構格式，重視關懷面向 |
+| 珍珠社會福利協會格式(Claude) | 珍珠社會福利協會 | Claude | 社福機構格式，表達更溫和 |
+
+### 使用方式
+
+1. **模板選擇**
+   - 在逐字稿編輯頁面點擊「生成報告」按鈕
+   - 從下拉選單選擇合適的模板
+   - 系統會記住使用者的選擇
+
+2. **差異化處理**
+   - 不同模板會觸發後端載入不同的 Prompt 腳本
+   - 各模板有專屬的處理邏輯和輸出格式
+   - AI 模型選擇會影響報告的語言風格和分析深度
+
+3. **狀態管理**
+   ```typescript
+   // 選中的模板會存儲在 Pinia store 中
+   sessionStore.setSelectedTemplate(template)
+   
+   // 支援 localStorage 持久化
+   persist: {
+     paths: ['selectedTemplate', ...]
+   }
+   ```
+
+### 擴展性
+
+系統設計支援輕鬆新增更多模板：
+
+```typescript
+// 新增模板只需修改 templates 陣列
+const templates = [
+  // 現有模板...
+  '新機構格式(GPT-4)',
+  '醫療社工格式(Claude)',
+  '學校社工格式(ChatGPT)'
+]
+```
+
+### 後端實現架構
+
+基於實際 `backend/app.py` 的實現，後端採用配置文件映射的方式處理不同模板：
+
+#### 配置文件映射
+```python
+# backend/app.py 中的模板配置映射
+config_file_map = {
+    '士林地院家事服務中心格式(ChatGPT)': 'run_court_format_gpt.json',
+    '士林地院家事服務中心格式(Claude)': 'run_court_format_claude.json',
+    '珍珠社會福利協會格式(ChatGPT)': 'run_association_format_gpt.json',
+    '珍珠社會福利協會格式(Claude)': 'run_association_format_claude.json',
+    '司法社工家庭訪視模板': 'run.json'  # 保持向後兼容
+}
+```
+
+#### API 端點實現
+```python
+@app.route('/api/run', methods=['POST'])
+def run_script():
+    data = request.get_json()
+    text = data.get('text', '')
+    template = data.get('template', '司法社工家庭訪視模板')
+    session_id = data.get('sessionId', str(uuid.uuid4()))
+    
+    # 根據前端傳來的模板名稱選擇對應的配置文件
+    config_file = config_file_map.get(template, 'run.json')
+    
+    # 為每個會話創建獨立的輸入文件
+    input_file = get_session_file_path(session_id, 'input.txt')
+    
+    # 調用對應的處理腳本
+    process = subprocess.Popen([
+        sys.executable, 'run.py', 
+        '--session-id', session_id,
+        '--input-file', input_file,
+        '--config-file', config_file  # 關鍵：傳入對應的配置文件
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+```
+
+#### 會話管理機制
+```python
+# 會話文件管理
+def get_session_file_path(session_id: str, filename: str) -> str:
+    """為每個會話創建獨立的工作目錄"""
+    session_dir = os.path.join(TEMP_DIR, session_id)
+    if not os.path.exists(session_dir):
+        os.makedirs(session_dir)
+    return os.path.join(session_dir, filename)
+
+def cleanup_session_files(session_id: str):
+    """清理會話文件，避免磁碟空間累積"""
+    session_dir = os.path.join(TEMP_DIR, session_id)
+    if os.path.exists(session_dir):
+        shutil.rmtree(session_dir)
+```
+
+### 完整的前後端流程
+
+1. **前端模板選擇**
+   ```typescript
+   // 用戶點擊模板選項
+   command: () => {
+     sessionStore.setSelectedTemplate(template)
+     generateReportStream(template)  // 觸發 API 調用
+   }
+   ```
+
+2. **API 請求傳送**
+   ```typescript
+   const response = await fetch('/api/run', {
+     method: 'POST',
+     body: JSON.stringify({ 
+       text: transcript,
+       template: '士林地院家事服務中心格式(ChatGPT)',  // 模板名稱
+       sessionId: sessionId.value
+     })
+   })
+   ```
+
+3. **後端配置文件選擇**
+   ```python
+   # 後端根據模板名稱選擇配置文件
+   config_file = config_file_map.get(template, 'run.json')
+   # 結果：'run_court_format_gpt.json'
+   ```
+
+4. **腳本執行與流式回傳**
+   ```python
+   # 調用對應的處理腳本
+   process = subprocess.Popen([
+     sys.executable, 'run.py',
+     '--config-file', 'run_court_format_gpt.json'
+   ])
+   
+   # 流式回傳結果
+   for line in process.stdout:
+     yield line  # 即時傳送到前端
+   ```
+
+### 支援的 API 端點
+
+| 端點 | 功能 | 特殊處理 |
+|------|------|----------|
+| `/api/run` | 報告生成 | 支援模板配置文件映射 |
+| `/api/PersonGraph` | 人物關係圖生成 | 固定使用 `person_graph.json` |
+| `/api/PersonGraphChat` | 人物關係圖對話編輯 | 支援上下文對話，整合逐字稿和當前關係圖 |
+| `/cleanup/<session_id>` | 清理會話文件 | 管理磁碟空間 |
+
+### 擴展新模板的步驟
+
+1. **前端新增模板**
+   ```typescript
+   const templates = [
+     // 現有模板...
+     '新機構格式(GPT-4)',  // 新增
+   ]
+   ```
+
+2. **後端新增配置映射**
+   ```python
+   config_file_map = {
+     # 現有映射...
+     '新機構格式(GPT-4)': 'run_new_institution_gpt4.json',  # 新增
+   }
+   ```
+
+3. **創建對應的配置文件**
+   - 建立 `run_new_institution_gpt4.json`
+   - 配置專屬的 Prompt 和 AI 模型參數
+   - 設定輸出格式和處理邏輯
+
+### 進階功能：人物關係圖對話編輯
+
+後端還支援智能對話方式編輯人物關係圖：
+
+```python
+@app.route('/api/PersonGraphChat', methods=['POST'])
+def person_graph_chat():
+    data = request.get_json()
+    message = data.get('message', '')           # 用戶指令
+    current_graph = data.get('currentGraph', '') # 當前關係圖JSON
+    transcript = data.get('transcript', '')      # 原始逐字稿
+    session_id = data.get('sessionId', str(uuid.uuid4()))
+    
+    # 創建包含完整上下文的輸入
+    input_content = f"""
+原始逐字稿:
+{transcript}
+
+當前人物關係圖JSON:
+{current_graph}
+
+用戶指令:
+{message}
+"""
+```
+
+這個功能讓使用者可以：
+- **自然語言編輯**：「請新增小明和小華的兄弟關係」
+- **上下文保持**：AI 會參考原始逐字稿和當前關係圖
+- **增量修改**：不需要重新生成整個關係圖
 
 ---
 
@@ -311,40 +580,48 @@ const customTheme = {
 ### 逐字稿編輯系統
 
 **檔案支援格式**:
-- 音檔: MP3, WAV, M4A, OGG
-- 文字檔: TXT, DOCX, PDF
+- 音檔: 基於 HTML5 Audio API 支援的格式
+- 文字檔: TXT (可直接貼上文字內容)
 
 **核心功能**:
-- 拖拽上傳檔案
-- 自動語音轉文字
-- 即時編輯與預覽
-- 自動儲存與回復
-- 匯出多種格式
+- 檔案上傳 (透過 BannerUpload 組件)
+- 文字內容編輯
+- 自動儲存至 localStorage
+- 下載為 TXT 檔案
 
 **技術實現**:
 ```typescript
-// 自動儲存功能
-const autoSave = debounce(() => {
-  sessionStore.setTranscriptText(transcriptText.value)
-}, 1000)
+// 狀態管理 (基於實際 useSessionStore.ts)
+const sessionStore = useSessionStore()
+const { transcriptText } = storeToRefs(sessionStore)
 
-watch(transcriptText, autoSave)
+// 支援 localStorage 持久化
+// 在 stores/useSessionStore.ts 中配置
+export const useSessionStore = defineStore('session', () => {
+  // ... store 邏輯
+}, {
+  persist: {
+    storage: localStorage,
+    paths: ['transcriptText', 'reportText', 'personGraphJson']
+  }
+})
 ```
 
 ### AI 報告生成系統
 
-**報告模板類型**:
-- 家事調解報告
-- 兒童保護評估
-- 老人照護評估
-- 身心障礙者服務評估
+**報告模板類型** (基於實際代碼):
+- 士林地院家事服務中心格式(ChatGPT)
+- 士林地院家事服務中心格式(Claude)
+- 珍珠社會福利協會格式(ChatGPT)
+- 珍珠社會福利協會格式(Claude)
 
 **生成流程**:
-1. 分析逐字稿內容
-2. 抽取關鍵資訊
-3. 匹配報告模板
-4. 流式生成內容
-5. 格式化輸出
+1. 使用者選擇報告模板 (SplitButton 下拉選單)
+2. 前端傳送逐字稿、模板名稱和會話 ID 到 `/api/run`
+3. 後端根據模板參數載入對應的 Prompt 腳本
+4. AI 流式生成報告內容
+5. 前端即時顯示累加內容
+6. (可選) 自動觸發人物關係圖生成
 
 ### 人物關係圖系統
 
@@ -471,22 +748,10 @@ CMD ["nginx", "-g", "daemon off;"]
 ## 🧪 測試
 
 ### 測試策略
-- **單元測試**: 使用 Vitest 進行組件單元測試
-- **整合測試**: API 整合測試
-- **端對端測試**: 使用 Cypress 進行 E2E 測試
+- **手動測試**: 目前主要依賴手動功能測試
 - **效能測試**: 使用 Lighthouse 進行效能評估
 
-### 運行測試
-```bash
-# 單元測試
-npm run test:unit
-
-# 端對端測試
-npm run test:e2e
-
-# 測試覆蓋率
-npm run test:coverage
-```
+**注意**: 專案目前尚未配置自動化測試框架，建議未來整合 Vitest 或 Cypress 進行單元測試和端對端測試。
 
 ---
 
