@@ -131,7 +131,7 @@ frontend/
 ├── 📄 .eslintrc.cjs             # ESLint 配置
 ├── 📄 .prettierrc.json          # Prettier 配置
 └── 📄 README.md                 # 專案說明文件
-```
+  ```
 
 ---
 
@@ -626,7 +626,7 @@ export const useSessionStore = defineStore('session', () => {
 ### 人物關係圖系統
 
 **資料結構**:
-```json
+  ```json
 {
   "nodes": [
     {
