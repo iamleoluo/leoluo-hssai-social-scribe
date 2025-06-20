@@ -1,3 +1,4 @@
+// File: stores/useSessionStore.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
@@ -10,8 +11,8 @@ export const useSessionStore = defineStore('session', () => {
   const transcriptText = ref('')
   const reportText = ref('')
   const hasSubmitted = ref(false)
-  const transcriptStage = ref<'idle' | 'transcribing' | 'correcting' | 'done'>('idle')
-  const reportStage = ref<'idle' | 'generating' | 'done'>('idle')
+  const transcriptStage = ref<'idle' | 'transcribing' | 'correcting' | 'done' | 'error'>('idle')
+  const reportStage = ref<'idle' | 'generating' | 'done' | 'error'>('idle')
   const activeTabIndex = ref(0)
   const selectedTemplate = ref('')
   const personGraphJson = ref('')
@@ -36,7 +37,7 @@ export const useSessionStore = defineStore('session', () => {
   function setActiveTab(index: number) {
     activeTabIndex.value = index
   }
-  function setTranscriptStage(stage: 'idle' | 'transcribing' | 'correcting' | 'done') {
+  function setTranscriptStage(stage: 'idle' | 'transcribing' | 'correcting' | 'done' | 'error') {
     transcriptStage.value = stage
   }
   function setReportStage(stage: 'idle' | 'generating' | 'done') {

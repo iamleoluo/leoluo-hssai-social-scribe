@@ -1,11 +1,12 @@
 export const transcriptStageMessageMap: Record<
-  'idle' | 'transcribing' | 'correcting' | 'done',
+  'idle' | 'transcribing' | 'correcting' | 'done' | 'error',
   string
 > = {
   idle: '',
   transcribing: '語音轉逐字稿中，請稍候…',
   correcting: '正在校正逐字稿內容…',
-  done: '逐字稿完成！'
+  done: '逐字稿完成！',
+  error: '逐字稿生成失敗！請稍後再試或聯繫管理員。'
 }
 
 export const reportStageMessageMap: Record<string, string> = {

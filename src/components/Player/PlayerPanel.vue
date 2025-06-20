@@ -1,3 +1,4 @@
+<!-- File: PlayerPanel.vue -->
 <template>
   <div class="w-full mx-auto">
     <button
