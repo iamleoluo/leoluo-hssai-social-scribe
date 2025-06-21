@@ -1,14 +1,14 @@
 <template>
-  <div>
-    <div v-if="personGraphStage === 'generating'" class="text-gray-500 mb-2">
+  <div class="h-full flex flex-col">
+    <div v-if="personGraphStage === 'generating'" class="flex-1 flex items-center justify-center text-gray-500">
       正在生成人物關係圖...
     </div>
-    <div v-else-if="!json || !json.trim()" class="text-gray-400">（尚未有資料）</div>
-    <div v-else-if="!isValidJson">
-      <div class="text-red-500">JSON 格式錯誤，請檢查內容！</div>
-      <pre class="bg-gray-100 p-2 rounded overflow-x-auto text-sm">{{ json }}</pre>
+    <div v-else-if="!json || !json.trim()" class="flex-1 flex items-center justify-center text-gray-400">（尚未有資料）</div>
+    <div v-else-if="!isValidJson" class="h-full flex flex-col">
+      <div class="text-red-500 mb-2">JSON 格式錯誤，請檢查內容！</div>
+      <pre class="bg-gray-100 p-2 rounded overflow-auto text-sm flex-1">{{ json }}</pre>
     </div>
-    <div v-else>
+    <div v-else class="h-full">
       <VisNetworkGraph :graphJson="json" />
     </div>
   </div>

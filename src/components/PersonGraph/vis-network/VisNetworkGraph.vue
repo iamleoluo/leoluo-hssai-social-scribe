@@ -1,5 +1,5 @@
 <template>
-  <div ref="graphContainer" style="height: 400px; border: 1px solid #ccc;"></div>
+  <div ref="graphContainer" class="w-full h-full border border-gray-300"></div>
 </template>
 
 <script setup lang="ts">

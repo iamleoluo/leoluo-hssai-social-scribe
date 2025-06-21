@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full max-w-4xl mx-auto p-4">
+  <div class="h-full flex flex-col p-4">
     <h2 class="text-lg font-bold mb-4">人物關係圖智能編輯</h2>
     
     <!-- 上下文信息顯示 -->
@@ -22,7 +22,7 @@
     </div>
     
     <!-- 對話歷史區域 -->
-    <div class="border rounded-lg p-4 mb-4 h-96 overflow-y-auto bg-gray-50">
+    <div class="border rounded-lg p-4 mb-4 flex-1 overflow-y-auto bg-gray-50">
       <div v-if="chatHistory.length === 0" class="text-gray-500 text-center py-8">
         開始對話來編輯您的人物關係圖...
       </div>
@@ -55,7 +55,7 @@
     </div>
     
     <!-- 輸入區域 -->
-    <div class="flex space-x-2">
+    <div class="flex space-x-2 mb-4">
       <input
         v-model="userInput"
         @keyup.enter="sendMessage"
@@ -73,7 +73,7 @@
     </div>
     
     <!-- 快速指令按鈕 -->
-    <div class="mt-4">
+    <div class="mt-auto">
       <p class="text-sm text-gray-600 mb-2">快速指令：</p>
       <div class="flex flex-wrap gap-2">
         <button

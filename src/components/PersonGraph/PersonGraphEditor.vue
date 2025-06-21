@@ -3,14 +3,14 @@
     <h2 class="text-lg font-bold mb-4">人物關係圖</h2>
     
     <!-- 左右佈局 -->
-    <div class="flex gap-4 h-[calc(100vh-120px)]">
-      <!-- 左側：人物關係圖 -->
-      <div class="flex-1">
+    <div class="flex gap-4">
+      <!-- 左側：人物關係圖 (高度更高，往下延伸) -->
+      <div class="flex-1 h-[calc(100vh-80px)]">
         <PersonGraphViewer />
       </div>
       
       <!-- 右側：對話區 -->
-      <div class="flex-1">
+      <div class="flex-1 h-[calc(100vh-80px)]">
         <PersonGraphChat />
       </div>
     </div>
