@@ -43,7 +43,8 @@ export default defineConfig({
     proxy: {
       '/api': 'http://127.0.0.1:5353'
     },
-    allowedHosts: ['hssai-socialworker.phys.nthu.edu.tw'],
-    host: '0.0.0.0'
+    allowedHosts: ['hssai-socialworker.phys.nthu.edu.tw', 'localhost', '127.0.0.1'],
+    host: '127.0.0.1',  // 本地開發用 127.0.0.1
+    port: 5173
   }
 })

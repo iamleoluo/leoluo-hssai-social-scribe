@@ -37,12 +37,24 @@
             <TranscriptEditor />
           </div>
         </template>
+        
+        <template #report-config-tab>
+          <!-- 報告設定內容 -->
+          <ReportConfigPanel />
+        </template>
+        
         <template #ai-doc-tab>
           <!-- AI 智能文件的內容 -->
           <div class="">
             <ReportEditor />
           </div>
         </template>
+        
+        <template #treatment-plan-tab>
+          <!-- 處遇計畫內容 -->
+          <TreatmentPlanEditor />
+        </template>
+        
         <template #person-graph-tab>
           <PersonGraphEditor />
         </template>
@@ -56,6 +68,8 @@ import { ref } from 'vue'
 import BannerUpload from '../components/Banner/BannerUpload.vue'
 import TranscriptEditor from '../components/TypescriptEditor/TypescriptEditor.vue'
 import ReportEditor from '../components/ReportSession/ReportEditor.vue'
+import ReportConfigPanel from '../components/ReportConfig/ReportConfigPanel.vue'
+import TreatmentPlanEditor from '../components/TreatmentPlan/TreatmentPlanEditor.vue'
 import DashboardPanel from '@/components/Dashboard/DashboardPanel.vue'
 import PlayerPanel from '@/components/Player/PlayerPanel.vue'
 import { useSessionStore } from '@/stores/useSessionStore'
