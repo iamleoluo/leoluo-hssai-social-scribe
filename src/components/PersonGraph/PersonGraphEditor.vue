@@ -28,6 +28,11 @@
 
     <!-- 智能對話編輯模式 -->
     <div v-if="editMode === 'auto'">
+      <!-- 人物關係圖顯示 -->
+      <div class="mb-6">
+        <PersonGraphViewer />
+      </div>
+      
       <PersonGraphChat />
     </div>
 
@@ -89,10 +94,6 @@
       </div>
     </div>
 
-    <!-- 人物關係圖顯示 -->
-    <div class="mt-6">
-      <PersonGraphViewer />
-    </div>
   </div>
 </template>
 
