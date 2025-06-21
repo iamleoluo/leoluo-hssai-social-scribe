@@ -1,3 +1,4 @@
+<!-- File: HomeView.vue -->
 <template>
   <div class="font-sans bg-white transition-all duration-1000 ease-in-out">
     <BannerUpload :scrollTarget="dashboardRef" />

@@ -1,3 +1,4 @@
+<!-- File: TypescriptEditor.vue -->
 <template>
   <div class="transition-all duration-1000 ease-in-out w-full text-gray-800">
     <Message v-if="sessionStore.transcriptStage !== 'idle'">{{ stageMessage }}</Message>
