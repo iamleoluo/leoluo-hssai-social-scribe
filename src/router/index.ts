@@ -9,6 +9,11 @@ const router = createRouter({
       name: 'home',
       alias: '/home',
       component: HomeView
+    },
+    {
+      path: '/graph-test',
+      name: 'graphTest',
+      component: () => import('../views/GraphTestView.vue')
     }
   ]
 })

@@ -129,6 +129,42 @@
               </div>
             </div>
           </div>
+          
+          <!-- 關係圖自動生成設定 -->
+          <div class="border-t pt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-3">
+              自動生成關係圖設定
+            </label>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                  <i class="pi pi-users text-blue-600"></i>
+                  <div>
+                    <div class="font-medium text-blue-800">人物關係圖</div>
+                    <div class="text-xs text-blue-600">分析人際關係、社會網絡、互動模式</div>
+                  </div>
+                </div>
+                <Checkbox 
+                  v-model="autoGeneratePersonGraph" 
+                  :binary="true"
+                />
+              </div>
+              
+              <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                  <i class="pi pi-home text-green-600"></i>
+                  <div>
+                    <div class="font-medium text-green-800">家庭關係圖</div>
+                    <div class="text-xs text-green-600">專注家庭結構、血緣關係、婚姻狀況</div>
+                  </div>
+                </div>
+                <Checkbox 
+                  v-model="autoGenerateFamilyGraph" 
+                  :binary="true"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </template>
     </Card>
@@ -174,10 +210,36 @@ import Textarea from 'primevue/textarea'
 import RadioButton from 'primevue/radiobutton'
 import Button from 'primevue/button'
 import { useSessionStore } from '@/stores/useSessionStore'
+import { usePersonGraphStore } from '@/stores/modules/personGraphStore'
 import { storeToRefs } from 'pinia'
 
+// JSON 清理函數
+const cleanJsonContent = (content: string): string => {
+  // 移除 markdown 代碼塊標記
+  content = content.replace(/```json\s*/gmi, '')
+  content = content.replace(/```\s*$/gm, '')
+  
+  // 嘗試找到 JSON 內容的開始和結束
+  // 對於數組格式 [...]
+  const arrayMatch = content.match(/(\[.*\])/s)
+  if (arrayMatch) {
+    return arrayMatch[1].trim()
+  }
+  
+  // 對於對象格式 {...}
+  const objectMatch = content.match(/(\{.*\})/s)
+  if (objectMatch) {
+    return objectMatch[1].trim()
+  }
+  
+  // 如果都找不到，返回原內容
+  return content.trim()
+}
+
 const sessionStore = useSessionStore()
+const personGraphStore = usePersonGraphStore()
 const { transcriptText, reportText, sessionId, autoGeneratePersonGraph } = storeToRefs(sessionStore)
+const { autoGenerateFamilyGraph } = storeToRefs(personGraphStore)
 
 // 預設模板
 const DEFAULT_TEMPLATE = 'universal_social_work_claude'
@@ -542,9 +604,13 @@ const generateReportWithConfig = async (config: any) => {
     
     sessionStore.setReportStage('done')
     
-    // 報告生成完成後，如果啟用自動生成人物關係圖，則自動觸發
+    // 報告生成完成後，自動生成關係圖
     if (autoGeneratePersonGraph.value) {
       await generatePersonGraphFromReport()
+    }
+    
+    if (autoGenerateFamilyGraph.value) {
+      await generateFamilyGraphFromReport()
     }
   } catch (err) {
     console.error('生成報告失敗', err)
@@ -570,6 +636,7 @@ const generatePersonGraphFromReport = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         text: reportTextValue,
+        graphType: 'person',
         sessionId: sessionId.value
       })
     })
@@ -603,12 +670,78 @@ const generatePersonGraphFromReport = async () => {
       }
     }
     
-    sessionStore.setPersonGraphJson(content)
+    // 清理 JSON 內容
+    const cleanedContent = cleanJsonContent(content)
+    
+    sessionStore.setPersonGraphJson(cleanedContent)
     sessionStore.setPersonGraphStage('done')
     console.log('人物關係圖自動生成完成')
   } catch (err) {
     console.error('生成人物關係圖失敗', err)
     sessionStore.setPersonGraphStage('done')
+  }
+}
+
+// 自動生成家庭關係圖
+const generateFamilyGraphFromReport = async () => {
+  const reportTextValue = reportText.value?.trim()
+  if (!reportTextValue) {
+    console.warn('沒有報告內容，無法生成家庭關係圖')
+    return
+  }
+
+  personGraphStore.setFamilyGraphStage('generating')
+  personGraphStore.setFamilyGraphJson('')
+
+  try {
+    const response = await fetch('/api/PersonGraph', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        text: reportTextValue,
+        graphType: 'family',
+        sessionId: sessionId.value
+      })
+    })
+    
+    if (!response.body) {
+      personGraphStore.setFamilyGraphStage('done')
+      return
+    }
+    
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+    let content = ''
+    
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      
+      buffer += decoder.decode(value, { stream: true })
+      let lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+      
+      for (const line of lines) {
+        if (!line.trim()) continue
+        try {
+          const obj = JSON.parse(line)
+          content += obj.content
+        } catch (e) {
+          // 忽略解析錯誤
+        }
+      }
+    }
+    
+    // 清理 JSON 內容
+    const cleanedContent = cleanJsonContent(content)
+    
+    personGraphStore.setFamilyGraphJson(cleanedContent)
+    personGraphStore.setFamilyGraphStage('done')
+    console.log('家庭關係圖自動生成完成')
+  } catch (err) {
+    console.error('生成家庭關係圖失敗', err)
+    personGraphStore.setFamilyGraphStage('done')
   }
 }
 

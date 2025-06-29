@@ -17,7 +17,16 @@
       <pre class="bg-gray-100 p-2 rounded overflow-auto text-sm flex-1">{{ currentJson }}</pre>
     </div>
     <div v-else class="h-full">
-      <VisNetworkGraph :graphJson="currentJson" />
+      <!-- 人物關係圖使用 vis.js -->
+      <VisNetworkGraph 
+        v-if="graphType === 'person'" 
+        :graphJson="currentJson" 
+      />
+      <!-- 家庭關係圖使用 FamilyTree.js -->
+      <FamilyTreeGraph 
+        v-else-if="graphType === 'family'" 
+        :graphJson="currentJson" 
+      />
     </div>
   </div>
 </template>
@@ -26,6 +35,7 @@
 import { computed } from 'vue'
 import { usePersonGraphStore } from '@/stores/modules/personGraphStore'
 import VisNetworkGraph from './vis-network/VisNetworkGraph.vue'
+import FamilyTreeGraph from './family-tree/FamilyTreeGraph.vue'
 
 // Props
 interface Props {

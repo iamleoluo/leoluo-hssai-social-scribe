@@ -13,6 +13,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@balkangraph/familytree.js": "^1.9.46",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@primeuix/themes": "^1.0.0",
     "autosize": "^6.0.1",
