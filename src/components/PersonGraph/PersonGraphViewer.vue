@@ -1,34 +1,51 @@
 <template>
   <div class="h-full flex flex-col">
-    <div v-if="personGraphStage === 'generating'" class="flex-1 flex items-center justify-center text-gray-500">
-      正在生成人物關係圖...
+    <div v-if="currentGraphStage === 'generating'" class="flex-1 flex items-center justify-center text-gray-500">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+        <div>正在生成{{ graphType === 'person' ? '人物關係圖' : '家庭關係圖' }}...</div>
+      </div>
     </div>
-    <div v-else-if="!json || !json.trim()" class="flex-1 flex items-center justify-center text-gray-400">（尚未有資料）</div>
+    <div v-else-if="!currentJson || !currentJson.trim()" class="flex-1 flex items-center justify-center text-gray-400">
+      <div class="text-center">
+        <i :class="graphType === 'person' ? 'pi pi-users' : 'pi pi-home'" class="text-4xl mb-2"></i>
+        <div>尚未有{{ graphType === 'person' ? '人物關係圖' : '家庭關係圖' }}資料</div>
+      </div>
+    </div>
     <div v-else-if="!isValidJson" class="h-full flex flex-col">
       <div class="text-red-500 mb-2">JSON 格式錯誤，請檢查內容！</div>
-      <pre class="bg-gray-100 p-2 rounded overflow-auto text-sm flex-1">{{ json }}</pre>
+      <pre class="bg-gray-100 p-2 rounded overflow-auto text-sm flex-1">{{ currentJson }}</pre>
     </div>
     <div v-else class="h-full">
-      <VisNetworkGraph :graphJson="json" />
+      <VisNetworkGraph :graphJson="currentJson" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useSessionStore } from '@/stores/useSessionStore'
+import { usePersonGraphStore } from '@/stores/modules/personGraphStore'
 import VisNetworkGraph from './vis-network/VisNetworkGraph.vue'
 
-const sessionStore = useSessionStore()
+// Props
+interface Props {
+  graphType: 'person' | 'family'
+}
 
-// 從 store 中獲取人物關係圖數據
-const json = computed(() => sessionStore.personGraphJson)
-const personGraphStage = computed(() => sessionStore.personGraphStage)
+const props = withDefaults(defineProps<Props>(), {
+  graphType: 'person'
+})
+
+const personGraphStore = usePersonGraphStore()
+
+// 根據圖表類型獲取對應數據
+const currentJson = computed(() => personGraphStore.getGraphJson(props.graphType))
+const currentGraphStage = computed(() => personGraphStore.getGraphStage(props.graphType))
 
 const isValidJson = computed(() => {
-  if (!json.value) return false
+  if (!currentJson.value) return false
   try {
-    JSON.parse(json.value)
+    JSON.parse(currentJson.value)
     return true
   } catch {
     return false

@@ -69,6 +69,28 @@
               />
             </div>
 
+            <!-- 社工服務領域 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                社工服務領域（可複選，影響處遇計畫建議）
+              </label>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div 
+                  v-for="field in serviceFields" 
+                  :key="field.value"
+                  class="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <Checkbox 
+                    v-model="selectedServiceFields" 
+                    :value="field.value"
+                  />
+                  <label class="text-sm font-medium text-gray-700 cursor-pointer">
+                    {{ field.name }}
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <!-- 生成按鈕 -->
             <div class="flex justify-center pt-4">
               <Button 
@@ -179,6 +201,7 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
+import Checkbox from 'primevue/checkbox'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { storeToRefs } from 'pinia'
 
@@ -192,7 +215,10 @@ const isEditing = ref(false)
 const isRegenerating = ref(false)
 const mainIssue = ref('')
 const caseType = ref('family_mediation')
+const selectedServiceFields = ref<string[]>([])
 const generatedAt = ref<Date | null>(null)
+const customNotes = ref('')
+const reportStyle = ref('formal')
 
 // 案件類型選項
 const caseTypeOptions = ref([
@@ -202,6 +228,21 @@ const caseTypeOptions = ref([
   { name: '兒少保護', value: 'child_protection' },
   { name: '家庭暴力', value: 'domestic_violence' },
   { name: '其他家事案件', value: 'other_family' }
+])
+
+// 社工服務領域選項
+const serviceFields = ref([
+  { name: '司法與矯治', value: 'judicial_correction' },
+  { name: '經濟扶助', value: 'economic_assistance' },
+  { name: '新(原)住民', value: 'new_residents' },
+  { name: '保護服務', value: 'protection_services' },
+  { name: '兒童與少年', value: 'children_youth' },
+  { name: '學校與教育', value: 'school_education' },
+  { name: '婦女與家庭', value: 'women_family' },
+  { name: '醫務相關', value: 'medical_related' },
+  { name: '心理與精神', value: 'psychological_mental' },
+  { name: '身心障礙', value: 'disability' },
+  { name: '老人與長照', value: 'elderly_longterm_care' }
 ])
 
 // 計算屬性
@@ -252,6 +293,11 @@ const generateTreatmentPlan = async () => {
         reportContent: reportText.value,
         mainIssue: mainIssue.value,
         caseType: caseType.value,
+        serviceFields: selectedServiceFields.value,
+        customSettings: {
+          notes: customNotes.value,
+          style: reportStyle.value
+        },
         sessionId: sessionId.value
       })
     })
