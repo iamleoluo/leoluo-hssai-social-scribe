@@ -212,6 +212,7 @@ import Button from 'primevue/button'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { usePersonGraphStore } from '@/stores/modules/personGraphStore'
 import { storeToRefs } from 'pinia'
+import { trackAPICall } from '@/utils/analytics'
 
 // JSON 清理函數
 const cleanJsonContent = (content: string): string => {
@@ -601,7 +602,7 @@ const generateReportWithConfig = async (config: any) => {
         }
       }
     }
-    
+    trackAPICall('run', 'report_generation', true)
     sessionStore.setReportStage('done')
     
     // 報告生成完成後，自動生成關係圖
@@ -616,6 +617,7 @@ const generateReportWithConfig = async (config: any) => {
     console.error('生成報告失敗', err)
     sessionStore.setReportText('[生成失敗，請稍後再試]')
     sessionStore.setReportStage('done')
+    trackAPICall('run', 'report_generation', false)
   }
 }
 
