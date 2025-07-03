@@ -130,6 +130,8 @@ import bgUrl from '@/assets/banner-background-img.png'
 import { useSessionStore } from '../../stores/useSessionStore'
 import apiClient from '@/api/axiosClient'
 import UserGuideDialog from './UserGuideDialog.vue'
+import { trackAPICall } from '@/utils/analytics' // 引入你之前建立的追蹤函數
+
 
 const props = defineProps<{
   scrollTarget: HTMLElement | null
@@ -316,9 +318,12 @@ const transcribeAudio = async (file: File) => {
     if (!transcript) throw new Error('轉錄結果為空')
     store.setTranscriptText(transcript)
 
+    trackAPICall('audio/transcriptions', 'whisper-1', true)
+
     await correctTranscriptWithOpenAI(transcript)
   } catch (e) {
     console.error('轉錄失敗', e)
+    trackAPICall('audio/transcriptions', 'whisper-1', false)
     store.setTranscriptText('[轉錄失敗，請稍後再試]')
   } finally {
     store.setTranscriptStage('done')
