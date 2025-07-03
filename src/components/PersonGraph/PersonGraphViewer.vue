@@ -3,13 +3,13 @@
     <div v-if="currentGraphStage === 'generating'" class="flex-1 flex items-center justify-center text-gray-500">
       <div class="text-center">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-        <div>正在生成{{ graphType === 'person' ? '人物關係圖' : '家庭關係圖' }}...</div>
+        <div>正在生成{{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }}...</div>
       </div>
     </div>
     <div v-else-if="!currentJson || !currentJson.trim()" class="flex-1 flex items-center justify-center text-gray-400">
       <div class="text-center">
         <i :class="graphType === 'person' ? 'pi pi-users' : 'pi pi-home'" class="text-4xl mb-2"></i>
-        <div>尚未有{{ graphType === 'person' ? '人物關係圖' : '家庭關係圖' }}資料</div>
+        <div>尚未有{{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }}資料</div>
       </div>
     </div>
     <div v-else-if="!isValidJson" class="h-full flex flex-col">
@@ -22,10 +22,10 @@
         v-if="graphType === 'person'" 
         :graphJson="currentJson" 
       />
-      <!-- 家庭關係圖使用 FamilyTree.js -->
-      <FamilyTreeGraph 
+      <!-- 家庭關係圖使用 Canvas -->
+      <CanvasFamilyTreeGraph 
         v-else-if="graphType === 'family'" 
-        :graphJson="currentJson" 
+        :graphData="parsedFamilyData" 
       />
     </div>
   </div>
@@ -35,7 +35,7 @@
 import { computed } from 'vue'
 import { usePersonGraphStore } from '@/stores/modules/personGraphStore'
 import VisNetworkGraph from './vis-network/VisNetworkGraph.vue'
-import FamilyTreeGraph from './family-tree/FamilyTreeGraph.vue'
+import CanvasFamilyTreeGraph from './family-tree/CanvasFamilyTreeGraph.vue'
 
 // Props
 interface Props {
@@ -59,6 +59,19 @@ const isValidJson = computed(() => {
     return true
   } catch {
     return false
+  }
+})
+
+// 解析家庭關係圖數據
+const parsedFamilyData = computed(() => {
+  if (props.graphType !== 'family' || !currentJson.value || !isValidJson.value) return []
+  try {
+    const parsed = JSON.parse(currentJson.value)
+    console.log('PersonGraphViewer: 解析家庭關係圖數據', parsed)
+    return parsed
+  } catch {
+    console.log('PersonGraphViewer: 解析家庭關係圖數據失敗')
+    return []
   }
 })
 </script>

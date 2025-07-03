@@ -1,6 +1,6 @@
 <template>
   <div class="h-full flex flex-col p-4">
-    <h2 class="text-lg font-bold mb-4">{{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }}智能編輯</h2>
+    <h2 class="text-lg font-bold mb-4">家庭關係圖智能編輯</h2>
     
     <!-- 上下文信息顯示 -->
     <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -12,7 +12,7 @@
         </div>
         <div class="flex items-center">
           <span class="w-2 h-2 rounded-full mr-2" :class="currentGraphJson ? 'bg-green-500' : 'bg-gray-400'"></span>
-          {{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }} ({{ currentGraphJson ? '已載入' : '無' }})
+          家庭關係圖 ({{ currentGraphJson ? '已載入' : '無' }})
         </div>
         <div class="flex items-center">
           <span class="w-2 h-2 rounded-full mr-2" :class="sessionStore.reportText ? 'bg-green-500' : 'bg-gray-400'"></span>
@@ -24,7 +24,7 @@
     <!-- 對話歷史區域 -->
     <div class="border rounded-lg p-4 mb-4 flex-1 overflow-y-auto bg-gray-50">
       <div v-if="chatHistory.length === 0" class="text-gray-500 text-center py-8">
-        開始對話來編輯您的{{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }}...
+        開始對話來編輯您的家庭關係圖...
       </div>
       
       <div v-for="(message, index) in chatHistory" :key="index" class="mb-4">
@@ -90,19 +90,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { usePersonGraphStore } from '@/stores/modules/personGraphStore'
-import PersonGraphViewer from './PersonGraphViewer.vue'
-
-// Props
-interface Props {
-  graphType: 'person' | 'family'
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  graphType: 'person'
-})
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -114,90 +104,33 @@ const sessionStore = useSessionStore()
 const personGraphStore = usePersonGraphStore()
 const userInput = ref('')
 const isLoading = ref(false)
-// 根據圖表類型分別儲存對話歷史
 const chatHistory = ref<ChatMessage[]>([])
 
-// 監聽圖表類型變化，切換對話歷史
-watch(() => props.graphType, (newType, oldType) => {
-  if (oldType && newType !== oldType) {
-    // 保存當前對話歷史
-    saveChatHistory(oldType)
-    // 載入新類型的對話歷史
-    loadChatHistory(newType)
-  }
-}, { immediate: false })
-
-// 根據圖表類型提供簡單的快速指令
-const quickCommands = computed(() => {
-  if (props.graphType === 'family') {
-    return [
-      '請基於逐字稿重新生成家庭關係圖',
-      '請突出血緣關係和婚姻關係',
-      '新增案主的配偶',
-      '新增案主的父母',
-      '修改人物年齡',
-      '設定存歿狀態'
-    ]
-  } else {
-    return [
-      '請基於逐字稿重新生成通用關係圖',
-      '請簡化人物關係，只保留主要角色',
-      '請加強主要角色之間的連結',
-      '請突出逐字稿中的衝突關係',
-      '請添加逐字稿中提到但遺漏的人物',
-      '請重新組織關係結構使其更清晰'
-    ]
-  }
-})
+// 家庭關係圖專用的快速指令
+const quickCommands = computed(() => [
+  '請基於逐字稿重新生成家庭關係圖',
+  '請突出血緣關係和婚姻關係',
+  '請標示居住安排和同住成員',
+  '請加強世代關係的層級結構',
+  '請添加逐字稿中提到的家庭成員',
+  '請重新組織家庭結構使其更清晰'
+])
 
 // 獲取當前圖表的JSON數據
-const currentGraphJson = computed(() => personGraphStore.getGraphJson(props.graphType))
+const currentGraphJson = computed(() => personGraphStore.getGraphJson('family'))
 
 onMounted(() => {
-  // 載入當前圖表類型的對話歷史
-  loadChatHistory(props.graphType)
-  
-  // 如果沒有對話歷史且有現有的關係圖，添加歡迎消息
-  if (chatHistory.value.length === 0 && currentGraphJson.value) {
-    const graphTypeName = props.graphType === 'person' ? '通用關係圖' : '家庭關係圖'
-    const suggestions = props.graphType === 'family' 
-      ? '• 調整家庭結構\n• 添加或移除家庭成員\n• 修改血緣/婚姻關係\n• 重新組織世代層級'
-      : '• 調整人物關係\n• 添加或移除角色\n• 修改關係強度\n• 重新組織結構'
+  // 如果有現有的關係圖，添加歡迎消息
+  if (currentGraphJson.value) {
+    const suggestions = '• 調整家庭結構\n• 添加或移除家庭成員\n• 修改血緣/婚姻關係\n• 重新組織世代層級'
     
     chatHistory.value.push({
       role: 'assistant',
-      content: `我已經為您載入了現有的${graphTypeName}。您可以告訴我需要如何修改，例如：\n${suggestions}`,
+      content: `我已經為您載入了現有的家庭關係圖。您可以告訴我需要如何修改，例如：\n${suggestions}`,
       timestamp: new Date()
     })
-    
-    // 保存歡迎消息
-    saveChatHistory(props.graphType)
   }
 })
-
-// 對話歷史管理方法
-function loadChatHistory(graphType: 'person' | 'family') {
-  const storageKey = `chatHistory_${graphType}_${sessionStore.sessionId}`
-  const saved = localStorage.getItem(storageKey)
-  if (saved) {
-    try {
-      const data = JSON.parse(saved)
-      chatHistory.value = data.map((msg: any) => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp)
-      }))
-    } catch (e) {
-      chatHistory.value = []
-    }
-  } else {
-    chatHistory.value = []
-  }
-}
-
-function saveChatHistory(graphType: 'person' | 'family') {
-  const storageKey = `chatHistory_${graphType}_${sessionStore.sessionId}`
-  localStorage.setItem(storageKey, JSON.stringify(chatHistory.value))
-}
 
 async function sendMessage() {
   if (!userInput.value.trim() || isLoading.value) return
@@ -223,7 +156,7 @@ async function sendMessage() {
         currentGraph: currentGraphJson.value,
         transcript: sessionStore.transcriptText,
         sessionId: sessionStore.sessionId,
-        graphType: props.graphType  // 新增圖表類型參數
+        graphType: 'family'  // 使用家庭關係圖類型
       })
     })
     
@@ -272,23 +205,17 @@ async function sendMessage() {
     if (newGraphJson) {
       try {
         // 驗證 JSON 格式
-        const parsed = JSON.parse(newGraphJson)
-        console.log(`PersonGraphChat: 更新${props.graphType}關係圖數據`, parsed)
-        personGraphStore.setGraphJson(props.graphType, newGraphJson)
-        console.log(`PersonGraphChat: 已更新Store中的${props.graphType}數據`)
+        JSON.parse(newGraphJson)
+        personGraphStore.setGraphJson('family', newGraphJson)
       } catch (e) {
         console.error('接收到的 JSON 格式錯誤:', newGraphJson)
-        const graphTypeName = props.graphType === 'person' ? '人物關係圖' : '家庭關係圖'
         chatHistory.value.push({
           role: 'assistant',
-          content: `抱歉，生成的${graphTypeName}格式有誤，請重試。`,
+          content: '抱歉，生成的家庭關係圖格式有誤，請重試。',
           timestamp: new Date()
         })
       }
     }
-    
-    // 保存對話歷史
-    saveChatHistory(props.graphType)
     
   } catch (error) {
     console.error('發送消息失敗:', error)
@@ -297,8 +224,6 @@ async function sendMessage() {
       content: '抱歉，處理您的請求時發生錯誤，請稍後再試。',
       timestamp: new Date()
     })
-    // 保存錯誤消息到歷史
-    saveChatHistory(props.graphType)
   } finally {
     isLoading.value = false
   }
@@ -324,4 +249,4 @@ async function sendMessage() {
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
-</style> 
+</style>

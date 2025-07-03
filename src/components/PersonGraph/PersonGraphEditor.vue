@@ -17,7 +17,7 @@
             ]"
           >
             <i class="pi pi-users mr-2"></i>
-            人物關係圖
+            通用關係圖
           </button>
           <button 
             @click="switchGraphType('family')"
@@ -54,6 +54,7 @@
       
       <!-- 右側：對話區 -->
       <div class="flex-1 h-[calc(100vh-120px)]">
+        <!-- 統一使用PersonGraphChat組件，支持兩種圖表類型 -->
         <PersonGraphChat :graph-type="currentGraphType" />
       </div>
     </div>
@@ -71,7 +72,7 @@ const currentGraphType = ref<'person' | 'family'>('person')
 // 切換圖表類型
 const switchGraphType = (type: 'person' | 'family') => {
   currentGraphType.value = type
-  console.log(`切換到${type === 'person' ? '人物關係圖' : '家庭關係圖'}模式`)
+  console.log(`切換到${type === 'person' ? '通用關係圖' : '家庭關係圖'}模式`)
 }
 </script>
 
