@@ -204,6 +204,16 @@ const loadGraphData = (data: any[]) => {
     }
   })
   
+  // 驗證並修復配偶關係的雙向性
+  nodeList.value.forEach(node => {
+    if (node.couple && node.couple.couple_id !== node.id) {
+      console.warn(`配偶關係不對稱: ${node.name}(${node.id}) -> ${node.couple.name}(${node.couple.id})，但反向引用缺失`)
+      // 自動修復：設置雙向引用
+      node.couple.couple = node
+      node.couple.couple_id = node.id
+    }
+  })
+  
   // 建立子女關係
   nodeList.value.forEach(node => {
     node.children = nodeList.value.filter(child => 
@@ -211,7 +221,53 @@ const loadGraphData = (data: any[]) => {
     )
   })
   
+  // 數據完整性檢查
+  validateDataIntegrity()
+  
   console.log('loadGraphData: 建立關係後的節點列表', nodeList.value)
+}
+
+// 數據完整性檢查
+const validateDataIntegrity = () => {
+  const issues: string[] = []
+  
+  nodeList.value.forEach(node => {
+    // 檢查無效父親引用
+    if (node.father_id !== null && node.father_id !== undefined && !node.father) {
+      issues.push(`${node.name}: 父親ID ${node.father_id} 不存在`)
+    }
+    
+    // 檢查無效母親引用
+    if (node.mother_id !== null && node.mother_id !== undefined && !node.mother) {
+      issues.push(`${node.name}: 母親ID ${node.mother_id} 不存在`)
+    }
+    
+    // 檢查無效配偶引用
+    if (node.couple_id !== null && node.couple_id !== undefined && !node.couple) {
+      issues.push(`${node.name}: 配偶ID ${node.couple_id} 不存在`)
+    }
+    
+    // 檢查父親性別
+    if (node.father && node.father.sex !== 1) {
+      issues.push(`${node.name}: 父親 ${node.father.name} 性別錯誤(應為男性)`)
+    }
+    
+    // 檢查母親性別
+    if (node.mother && node.mother.sex !== 0) {
+      issues.push(`${node.name}: 母親 ${node.mother.name} 性別錯誤(應為女性)`)
+    }
+    
+    // 檢查孤立節點（非案主且無任何關係）
+    if (!node.me && !node.father && !node.mother && !node.couple && node.children.length === 0) {
+      issues.push(`${node.name}: 孤立節點，沒有任何關係連接`)
+    }
+  })
+  
+  if (issues.length > 0) {
+    console.warn('數據完整性問題:', issues)
+  } else {
+    console.log('數據完整性檢查通過')
+  }
 }
 
 // 測試數據
@@ -474,17 +530,53 @@ const updateCanvas = () => {
 const resetAllSite = () => {
   if (nodeList.value.length === 0) return
   
-  nodeList.value[0].x = canvasWidth.value / 2
-  nodeList.value[0].y = canvasHeight.value / 2
+  // 找到案主節點（me=true或id=0）
+  const mainNode = nodeList.value.find(node => node.me) || nodeList.value.find(node => node.id === 0) || nodeList.value[0]
+  if (!mainNode) return
   
-  resetParentSite(0)
-  resetCoupleSite(0)
-  resetChildrenSite(0)
+  // 設置案主在畫布中心
+  mainNode.x = canvasWidth.value / 2
+  mainNode.y = canvasHeight.value / 2
+  
+  // 從案主開始計算所有位置
+  resetParentSite(mainNode.id)
+  resetCoupleSite(mainNode.id)
+  resetChildrenSite(mainNode.id)
+  
+  // 處理孤立節點（沒有關係連接的節點）
+  handleOrphanNodes()
 }
 
-const resetParentSite = (index: number) => {
-  const node = nodeList.value[index]
-  if (!node.father || !node.mother || paintedNodes.value[index]) return
+// 處理孤立節點
+const handleOrphanNodes = () => {
+  const orphanNodes = nodeList.value.filter(node => 
+    !node.me && 
+    node.x === 0 && 
+    node.y === 0 && 
+    !node.father && 
+    !node.mother && 
+    !node.couple && 
+    node.children.length === 0
+  )
+  
+  if (orphanNodes.length > 0) {
+    console.log(`發現 ${orphanNodes.length} 個孤立節點:`, orphanNodes.map(n => n.name))
+    
+    // 將孤立節點放置在畫布左上角
+    orphanNodes.forEach((node, index) => {
+      node.x = 100 + (index * 120)
+      node.y = 100
+      console.log(`孤立節點 ${node.name} 放置在 (${node.x}, ${node.y})`)
+    })
+  }
+}
+
+const resetParentSite = (nodeId: number) => {
+  const node = nodeList.value.find(n => n.id === nodeId)
+  if (!node || !node.father || !node.mother) return
+  
+  // 避免重複計算
+  if (node.father.x !== 0 && node.father.y !== 0) return
   
   node.father.x = node.x - coupleDistance / 2
   node.mother.x = node.x + coupleDistance / 2
@@ -496,9 +588,12 @@ const resetParentSite = (index: number) => {
   resetChildrenSite(node.mother.id)
 }
 
-const resetCoupleSite = (index: number) => {
-  const node = nodeList.value[index]
-  if (!node.couple || paintedNodes.value[index]) return
+const resetCoupleSite = (nodeId: number) => {
+  const node = nodeList.value.find(n => n.id === nodeId)
+  if (!node || !node.couple) return
+  
+  // 避免重複計算
+  if (node.couple.x !== 0 && node.couple.y !== 0) return
   
   node.couple.y = node.y
   if (node.sex === 0) {
@@ -511,30 +606,44 @@ const resetCoupleSite = (index: number) => {
   resetChildrenSite(node.couple.id)
 }
 
-const resetChildrenSite = (index: number) => {
-  const node = nodeList.value[index]
-  if (node.children.length === 0 || paintedNodes.value[index]) return
+const resetChildrenSite = (nodeId: number) => {
+  const node = nodeList.value.find(n => n.id === nodeId)
+  if (!node || node.children.length === 0) return
   
-  paintedNodes.value[index] = true
+  // 避免重複計算
+  const nodeIndex = nodeList.value.findIndex(n => n.id === nodeId)
+  if (nodeIndex === -1 || paintedNodes.value[nodeIndex]) return
+  paintedNodes.value[nodeIndex] = true
   
-  if (node.sex === 0) {
-    node.children.forEach((child, i) => {
-      child.x = node.x + (childHorizontalDistance * i) - ((node.children.length - 1) * childHorizontalDistance / 2)
-      child.y = node.y + nodeVerticalDistance
-      resetChildrenSite(child.id)
-    })
-  } else {
-    node.children.forEach((child, i) => {
-      child.x = node.x + (childHorizontalDistance * i) - ((node.children.length - 1) * childHorizontalDistance / 2)
-      child.y = node.y + nodeVerticalDistance
-      resetChildrenSite(child.id)
-    })
+  // 計算子女位置（以父母中心為基準）
+  let baseX = node.x
+  if (node.couple && node.sex === 1) {
+    // 如果是男性且有配偶，以夫妻中心為基準
+    baseX = (node.x + node.couple.x) / 2
   }
+  
+  node.children.forEach((child, i) => {
+    // 避免重複設置已有位置的子女
+    if (child.x === 0 && child.y === 0) {
+      child.x = baseX + (childHorizontalDistance * i) - ((node.children.length - 1) * childHorizontalDistance / 2)
+      child.y = node.y + nodeVerticalDistance
+    }
+    resetChildrenSite(child.id)
+  })
 }
 
 // 繪圖函數
 const paint = () => {
   console.log('paint: 開始繪製，節點數量:', nodeList.value.length)
+  
+  // 重置所有節點座標（除了案主）
+  nodeList.value.forEach((node, index) => {
+    if (!node.me && node.id !== 0) {
+      node.x = 0
+      node.y = 0
+    }
+  })
+  
   paintedNodes.value = new Array(nodeList.value.length).fill(false)
   resetAllSite()
   paint2()
@@ -644,12 +753,15 @@ const drawCoupleLine = (node: FamilyNode) => {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
   
-  if (node.couple && node.sex === 1) {
+  // 只有男性繪製夫妻線，避免重複
+  if (node.couple && node.sex === 1 && node.couple.x > 0 && node.couple.y > 0) {
     const nodeX = node.x + moveX.value + movedX.value
     const nodeY = node.y + moveY.value + movedY.value
     const coupleX = node.couple.x + moveX.value + movedX.value
     const coupleY = node.couple.y + moveY.value + movedY.value
     
+    ctx.strokeStyle = "black"
+    ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(nodeX, nodeY + size - 2)
     ctx.lineTo(nodeX, nodeY + nodeVerticalDistance * 2/7)
@@ -668,40 +780,74 @@ const drawChildrenLine = (node: FamilyNode) => {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
   
-  if (node.couple && node.children.length !== 0 && node.sex === 1) {
-    const nodeX = node.x + moveX.value + movedX.value
-    const nodeY = node.y + moveY.value + movedY.value
-    const coupleX = node.couple!.x + moveX.value + movedX.value
-    const coupleY = node.couple!.y + moveY.value + movedY.value
-    
-    ctx.beginPath()
-    
-    // 橫線連接所有子女
-    if (node.children.length > 0) {
-      const firstChildX = node.children[0].x + moveX.value + movedX.value
-      const lastChildX = node.children[node.children.length - 1].x + moveX.value + movedX.value
-      
-      ctx.moveTo(firstChildX, nodeY + nodeVerticalDistance * 5/8)
-      ctx.lineTo(lastChildX, coupleY + nodeVerticalDistance * 5/8)
-    }
-    
-    // 每個子女的垂直連線
-    node.children.forEach(child => {
-      const childX = child.x + moveX.value + movedX.value
-      const childY = child.y + moveY.value + movedY.value
-      
-      ctx.moveTo(childX, childY - nodeVerticalDistance * 3/8)
-      ctx.lineTo(childX, childY - size + 1)
-    })
+  // 只有有子女的節點才繪製親子線
+  if (node.children.length === 0) return
+  
+  // 檢查所有子女是否都有有效座標
+  const validChildren = node.children.filter(child => child.x > 0 && child.y > 0)
+  if (validChildren.length === 0) return
+  
+  const nodeX = node.x + moveX.value + movedX.value
+  const nodeY = node.y + moveY.value + movedY.value
+  
+  ctx.strokeStyle = "black"
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  
+  if (node.couple && node.sex === 1 && node.couple.x > 0 && node.couple.y > 0) {
+    // 有配偶的情況：從父母中心延伸
+    const coupleX = node.couple.x + moveX.value + movedX.value
+    const coupleY = node.couple.y + moveY.value + movedY.value
+    const parentCenterX = (coupleX + nodeX) / 2
     
     // 父母中間往下的垂直線
-    const parentCenterX = (coupleX + nodeX) / 2
     ctx.moveTo(parentCenterX, nodeY + nodeVerticalDistance * 2/7)
     ctx.lineTo(parentCenterX, nodeY + nodeVerticalDistance * 5/8)
     
-    ctx.stroke()
-    console.log(`繪製親子連線: ${node.name} 有 ${node.children.length} 個子女`)
+    // 橫線連接所有子女
+    if (validChildren.length > 1) {
+      const firstChildX = validChildren[0].x + moveX.value + movedX.value
+      const lastChildX = validChildren[validChildren.length - 1].x + moveX.value + movedX.value
+      ctx.moveTo(firstChildX, nodeY + nodeVerticalDistance * 5/8)
+      ctx.lineTo(lastChildX, nodeY + nodeVerticalDistance * 5/8)
+    }
+    
+    // 每個子女的垂直連線
+    validChildren.forEach(child => {
+      const childX = child.x + moveX.value + movedX.value
+      const childY = child.y + moveY.value + movedY.value
+      
+      ctx.moveTo(childX, nodeY + nodeVerticalDistance * 5/8)
+      ctx.lineTo(childX, childY - size + 1)
+    })
+  } else {
+    // 單親情況：直接從該節點延伸
+    const baseY = nodeY + nodeVerticalDistance * 2/7
+    
+    // 橫線連接所有子女
+    if (validChildren.length > 1) {
+      const firstChildX = validChildren[0].x + moveX.value + movedX.value
+      const lastChildX = validChildren[validChildren.length - 1].x + moveX.value + movedX.value
+      ctx.moveTo(firstChildX, baseY)
+      ctx.lineTo(lastChildX, baseY)
+    }
+    
+    // 每個子女的垂直連線
+    validChildren.forEach(child => {
+      const childX = child.x + moveX.value + movedX.value
+      const childY = child.y + moveY.value + movedY.value
+      
+      ctx.moveTo(childX, baseY)
+      ctx.lineTo(childX, childY - size + 1)
+    })
+    
+    // 父/母往下的垂直線
+    ctx.moveTo(nodeX, nodeY + size - 2)
+    ctx.lineTo(nodeX, baseY)
   }
+  
+  ctx.stroke()
+  console.log(`繪製親子連線: ${node.name} 有 ${validChildren.length} 個有效子女`)
 }
 
 // 監聽數據變化
