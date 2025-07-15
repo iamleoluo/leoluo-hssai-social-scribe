@@ -27,18 +27,9 @@ export const useSessionStore = defineStore('session', () => {
     isComplete: false
   })
   
-  // 新增：處遇計畫狀態
-  const treatmentPlan = ref({
-    content: '',
-    isGenerated: false,
-    isEditing: false,
-    generatedAt: null as Date | null
-  })
-  
   // 新增：分頁控制狀態
   const currentStep = ref(1) // 1-5
   const stepValidation = ref([false, false, false, false, false])
-  const treatmentPlanStage = ref<'idle' | 'generating' | 'done' | 'error'>('idle')
 
   // getters
   const hasUploaded = computed(() =>
@@ -48,7 +39,6 @@ export const useSessionStore = defineStore('session', () => {
   const hasReport = computed(() => !!reportText.value)
   const hasPersonGraph = computed(() => !!personGraphJson.value)
   const hasReportConfig = computed(() => reportConfig.value.isComplete)
-  const hasTreatmentPlan = computed(() => !!treatmentPlan.value.content)
 
   // actions
   function initializeSession() {
@@ -104,14 +94,9 @@ export const useSessionStore = defineStore('session', () => {
              reportConfig.value.selectedSections.length > 0)
   }
   
-  // 新增：處遇計畫相關 actions
-  function setTreatmentPlan(plan: Partial<typeof treatmentPlan.value>) {
-    treatmentPlan.value = { ...treatmentPlan.value, ...plan }
-    stepValidation.value[3] = !!plan.content
-  }
-  
-  function setTreatmentPlanStage(stage: 'idle' | 'generating' | 'done' | 'error') {
-    treatmentPlanStage.value = stage
+  // 新增：處遇計畫相關 actions（使用 treatment plan store）
+  function updateTreatmentPlanValidation(hasContent: boolean) {
+    stepValidation.value[3] = hasContent
   }
   
   // 新增：分頁控制 actions
@@ -145,15 +130,8 @@ export const useSessionStore = defineStore('session', () => {
       customSettings: {},
       isComplete: false
     }
-    treatmentPlan.value = {
-      content: '',
-      isGenerated: false,
-      isEditing: false,
-      generatedAt: null
-    }
     currentStep.value = 1
     stepValidation.value = [false, false, false, false, false]
-    treatmentPlanStage.value = 'idle'
     localStorage.removeItem('pinia')
   }
   function clearSession() {
@@ -178,17 +156,14 @@ export const useSessionStore = defineStore('session', () => {
     autoGeneratePersonGraph,
     // 新增狀態
     reportConfig,
-    treatmentPlan,
     currentStep,
     stepValidation,
-    treatmentPlanStage,
     // getters
     hasUploaded,
     hasTypescript,
     hasReport,
     hasPersonGraph,
     hasReportConfig,
-    hasTreatmentPlan,
     // 現有 actions
     initializeSession,
     setSelectedTemplate,
@@ -206,8 +181,7 @@ export const useSessionStore = defineStore('session', () => {
     // 新增 actions
     setReportConfig,
     validateReportConfig,
-    setTreatmentPlan,
-    setTreatmentPlanStage,
+    updateTreatmentPlanValidation,
     setCurrentStep,
     updateStepValidation,
     reset,
@@ -216,6 +190,6 @@ export const useSessionStore = defineStore('session', () => {
 }, {
   persist: {
     storage: localStorage,
-    paths: ['sessionId', 'transcriptText', 'reportText', 'selectedTemplate', 'activeTabIndex', 'personGraphJson', 'autoGeneratePersonGraph', 'reportConfig', 'treatmentPlan', 'currentStep']
+    paths: ['sessionId', 'transcriptText', 'reportText', 'selectedTemplate', 'activeTabIndex', 'personGraphJson', 'autoGeneratePersonGraph', 'reportConfig', 'currentStep']
   }
 })

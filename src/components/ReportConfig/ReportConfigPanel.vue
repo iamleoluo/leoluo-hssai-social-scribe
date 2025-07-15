@@ -243,7 +243,7 @@ const { transcriptText, reportText, sessionId, autoGeneratePersonGraph } = store
 const { autoGenerateFamilyGraph } = storeToRefs(personGraphStore)
 
 // 預設模板
-const DEFAULT_TEMPLATE = 'universal_social_work_claude'
+const DEFAULT_TEMPLATE = '通用社工評估報告'
 
 // 通用議題選項 - 按照社工訪視紀錄標準架構
 const availableSections = ref([

@@ -25,6 +25,34 @@
 
     <!-- 處遇計畫內容 -->
     <div v-else>
+      <!-- 錯誤訊息 -->
+      <div v-if="errorMessage" class="mb-6 p-4 rounded-lg border" 
+           :class="{
+             'bg-red-50 border-red-200 text-red-700': errorType === 'server' || errorType === 'network',
+             'bg-yellow-50 border-yellow-200 text-yellow-700': errorType === 'validation',
+             'bg-gray-50 border-gray-200 text-gray-700': errorType === 'unknown'
+           }">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle" 
+             :class="{
+               'text-red-500': errorType === 'server' || errorType === 'network',
+               'text-yellow-500': errorType === 'validation',
+               'text-gray-500': errorType === 'unknown'
+             }"></i>
+          <span class="font-medium">{{ errorMessage }}</span>
+        </div>
+        <Button 
+          label="重試"
+          icon="pi pi-refresh"
+          size="small"
+          class="mt-2"
+          :severity="errorType === 'validation' ? 'warning' : 'danger'"
+          outlined
+          @click="generateTreatmentPlan"
+          v-if="errorType !== 'validation'"
+        />
+      </div>
+      
       <!-- 生成控制區域 -->
       <Card class="mb-6" v-if="!hasTreatmentPlan || isRegenerating">
         <template #title>
@@ -156,12 +184,28 @@
 
             <div v-else>
               <Textarea 
-                v-model="treatmentContent"
+                :model-value="treatmentContent"
+                @update:model-value="updateTreatmentContent"
                 :readonly="!isEditing"
                 rows="20"
                 class="w-full font-mono text-sm"
                 :class="{ 'bg-gray-50': !isEditing }"
               />
+              <div v-if="isEditing" class="flex gap-2 mt-2">
+                <Button 
+                  label="儲存" 
+                  icon="pi pi-check" 
+                  severity="success" 
+                  @click="saveEdit"
+                />
+                <Button 
+                  label="取消" 
+                  icon="pi pi-times" 
+                  severity="secondary" 
+                  outlined
+                  @click="cancelEdit"
+                />
+              </div>
             </div>
           </div>
         </template>
@@ -203,22 +247,23 @@ import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
 import Checkbox from 'primevue/checkbox'
 import { useSessionStore } from '@/stores/useSessionStore'
+import { useTreatmentPlanStore } from '@/stores/modules/treatmentPlanStore'
 import { storeToRefs } from 'pinia'
 
 const sessionStore = useSessionStore()
+const treatmentPlanStore = useTreatmentPlanStore()
 const { reportText, sessionId } = storeToRefs(sessionStore)
+const { treatmentPlan, treatmentPlanStage, hasTreatmentPlan, isGenerating, canGenerate } = storeToRefs(treatmentPlanStore)
 
-// 響應式狀態
-const treatmentContent = ref('')
-const isGenerating = ref(false)
-const isEditing = ref(false)
+// 本地響應式狀態
 const isRegenerating = ref(false)
 const mainIssue = ref('')
 const caseType = ref('family_mediation')
 const selectedServiceFields = ref<string[]>([])
-const generatedAt = ref<Date | null>(null)
 const customNotes = ref('')
 const reportStyle = ref('formal')
+const errorMessage = ref('')
+const errorType = ref<'network' | 'validation' | 'server' | 'unknown'>('unknown')
 
 // 案件類型選項
 const caseTypeOptions = ref([
@@ -247,7 +292,10 @@ const serviceFields = ref([
 
 // 計算屬性
 const hasReport = computed(() => !!reportText.value?.trim())
-const hasTreatmentPlan = computed(() => !!treatmentContent.value?.trim())
+const treatmentContent = computed(() => treatmentPlan.value.content)
+const isEditing = computed(() => treatmentPlan.value.isEditing)
+const generatedAt = computed(() => treatmentPlan.value.generatedAt)
+// 移除重複的 hasTreatmentPlan 計算屬性，使用 store 中的
 const reportSummary = computed(() => {
   const report = reportText.value?.trim()
   if (!report) return '尚無報告內容'
@@ -278,12 +326,16 @@ const extractMainIssue = () => {
 
 const generateTreatmentPlan = async () => {
   if (!mainIssue.value.trim()) {
-    alert('請先填寫主要議題')
+    handleError('validation', '請先填寫主要議題')
     return
   }
   
-  isGenerating.value = true
-  treatmentContent.value = ''
+  // 清除之前的錯誤
+  errorMessage.value = ''
+  errorType.value = 'unknown'
+  
+  treatmentPlanStore.setTreatmentPlanStage('generating')
+  treatmentPlanStore.setTreatmentPlanContent('')
   
   try {
     const response = await fetch('/api/treatment-plan', {
@@ -302,14 +354,19 @@ const generateTreatmentPlan = async () => {
       })
     })
     
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`伺服器錯誤 (${response.status}): ${errorText}`)
+    }
+    
     if (!response.body) {
-      isGenerating.value = false
-      return
+      throw new Error('伺服器未返回數據流')
     }
     
     const reader = response.body.getReader()
     const decoder = new TextDecoder('utf-8')
     let buffer = ''
+    let content = ''
     
     while (true) {
       const { value, done } = await reader.read()
@@ -323,32 +380,77 @@ const generateTreatmentPlan = async () => {
         if (!line.trim()) continue
         try {
           const obj = JSON.parse(line)
-          treatmentContent.value += obj.content
+          content += obj.content
+          // 實時更新內容
+          treatmentPlanStore.setTreatmentPlanContent(content)
         } catch (e) {
-          // 忽略解析錯誤
+          console.warn('解析流數據失敗:', e)
         }
       }
     }
     
-    generatedAt.value = new Date()
-    isGenerating.value = false
-    isRegenerating.value = false
+    // 更新驗證狀態
+    sessionStore.updateTreatmentPlanValidation(!!content)
+    treatmentPlanStore.setTreatmentPlanStage('done')
     
   } catch (err) {
     console.error('生成處遇計畫失敗', err)
-    treatmentContent.value = '[生成失敗，請稍後再試]'
-    isGenerating.value = false
+    console.error('錯誤詳細信息:', {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+      isRegenerating: isRegenerating.value
+    })
+    
+    // 根據錯誤類型設置相應的錯誤信息
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      handleError('network', '網路連接失敗，請檢查網路狀態後重試')
+    } else if (err.message.includes('伺服器錯誤')) {
+      handleError('server', err.message)
+    } else {
+      handleError('unknown', `處遇計畫生成失敗: ${err.message}`)
+    }
+    
+    treatmentPlanStore.setTreatmentPlanStage('error')
+  }
+}
+
+const handleError = (type: 'network' | 'validation' | 'server' | 'unknown', message: string) => {
+  errorType.value = type
+  errorMessage.value = message
+}
+
+const regeneratePlan = async () => {
+  isRegenerating.value = true
+  // 清除之前的錯誤訊息
+  errorMessage.value = ''
+  errorType.value = 'unknown'
+  
+  try {
+    await generateTreatmentPlan()
+  } catch (error) {
+    console.error('重新生成處遇計畫失敗:', error)
+  } finally {
     isRegenerating.value = false
   }
 }
 
-const regeneratePlan = () => {
-  isRegenerating.value = true
-  generateTreatmentPlan()
+const toggleEdit = () => {
+  treatmentPlanStore.startEditing()
 }
 
-const toggleEdit = () => {
-  isEditing.value = !isEditing.value
+const updateTreatmentContent = (content: string) => {
+  treatmentPlanStore.setTreatmentPlanContent(content)
+}
+
+const saveEdit = () => {
+  treatmentPlanStore.stopEditing()
+  // 更新驗證狀態
+  sessionStore.updateTreatmentPlanValidation(!!treatmentContent.value)
+}
+
+const cancelEdit = () => {
+  treatmentPlanStore.stopEditing()
 }
 
 const downloadPlan = () => {
