@@ -69,33 +69,7 @@
               <p class="text-gray-600 text-sm">{{ reportSummary }}</p>
             </div>
 
-            <!-- 主述議題提取 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                主要議題（可編輯）
-              </label>
-              <Textarea 
-                v-model="mainIssue"
-                rows="3"
-                placeholder="系統將自動從報告中提取主要議題，您也可以手動調整..."
-                class="w-full"
-              />
-            </div>
 
-            <!-- 案件類型 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                案件類型
-              </label>
-              <Dropdown
-                v-model="caseType"
-                :options="caseTypeOptions"
-                optionLabel="name"
-                optionValue="value"
-                placeholder="請選擇案件類型"
-                class="w-full"
-              />
-            </div>
 
             <!-- 社工服務領域 -->
             <div>
@@ -124,7 +98,7 @@
               <Button 
                 :label="isGenerating ? '生成中...' : '生成處遇計畫'"
                 :icon="isGenerating ? 'pi pi-spin pi-spinner' : 'pi pi-plus'"
-                :disabled="isGenerating || !mainIssue.trim()"
+                :disabled="isGenerating"
                 :loading="isGenerating"
                 @click="generateTreatmentPlan"
                 size="large"
@@ -148,7 +122,7 @@
                 severity="secondary" 
                 outlined
                 @click="regeneratePlan"
-                v-tooltip="'重新生成'"
+                v-tooltip="'重新設定'"
               />
               <Button 
                 icon="pi pi-pencil" 
@@ -325,11 +299,6 @@ const extractMainIssue = () => {
 }
 
 const generateTreatmentPlan = async () => {
-  if (!mainIssue.value.trim()) {
-    handleError('validation', '請先填寫主要議題')
-    return
-  }
-  
   // 清除之前的錯誤
   errorMessage.value = ''
   errorType.value = 'unknown'
@@ -420,19 +389,12 @@ const handleError = (type: 'network' | 'validation' | 'server' | 'unknown', mess
   errorMessage.value = message
 }
 
-const regeneratePlan = async () => {
+const regeneratePlan = () => {
+  // 顯示生成控制區域，讓用戶修改後手動發送
   isRegenerating.value = true
   // 清除之前的錯誤訊息
   errorMessage.value = ''
   errorType.value = 'unknown'
-  
-  try {
-    await generateTreatmentPlan()
-  } catch (error) {
-    console.error('重新生成處遇計畫失敗:', error)
-  } finally {
-    isRegenerating.value = false
-  }
 }
 
 const toggleEdit = () => {
