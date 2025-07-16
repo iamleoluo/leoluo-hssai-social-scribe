@@ -153,51 +153,6 @@
     </Card>
 
 
-    <!-- 自定義設定區域 -->
-    <Card class="mb-6" v-if="selectedSections.length > 0">
-      <template #title>
-        <span class="flex items-center gap-2">
-          <i class="pi pi-cog text-purple-600"></i>
-          自定義設定 (選填)
-        </span>
-      </template>
-      <template #content>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              特殊要求或備註
-            </label>
-            <Textarea 
-              v-model="customNotes"
-              rows="3"
-              placeholder="例如：特別注重子女議題的分析、強調法律相關建議等..."
-              class="w-full"
-            />
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              報告風格偏好
-            </label>
-            <div class="flex gap-4">
-              <div class="flex items-center">
-                <RadioButton v-model="reportStyle" value="formal" />
-                <label class="ml-2">正式風格</label>
-              </div>
-              <div class="flex items-center">
-                <RadioButton v-model="reportStyle" value="detailed" />
-                <label class="ml-2">詳細分析</label>
-              </div>
-              <div class="flex items-center">
-                <RadioButton v-model="reportStyle" value="concise" />
-                <label class="ml-2">簡潔摘要</label>
-              </div>
-            </div>
-          </div>
-          
-        </div>
-      </template>
-    </Card>
 
     <!-- 操作按鈕 -->
     <div class="flex justify-between items-center pt-4 border-t">
@@ -234,10 +189,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import Card from 'primevue/card'
-import Dropdown from 'primevue/dropdown'
 import Checkbox from 'primevue/checkbox'
-import Textarea from 'primevue/textarea'
-import RadioButton from 'primevue/radiobutton'
 import Button from 'primevue/button'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { usePersonGraphStore } from '@/stores/modules/personGraphStore'
@@ -427,8 +379,6 @@ const availableSections = ref([
 const selectedSections = ref<string[]>([])
 const selectAll = ref(false)
 const selectAllOptional = ref(false)
-const customNotes = ref('')
-const reportStyle = ref('formal')
 
 // 計算屬性 - 只顯示可選分類
 const optionalCategories = computed(() => {
@@ -618,8 +568,6 @@ const resetConfig = () => {
   selectedSections.value = []
   selectAll.value = false
   selectAllOptional.value = false
-  customNotes.value = ''
-  reportStyle.value = 'formal'
   
   // 重新設定必選項目
   const requiredSections = availableSections.value
@@ -633,10 +581,7 @@ const proceedToReport = async () => {
   const config = {
     selectedTemplate: DEFAULT_TEMPLATE,
     selectedSections: selectedSections.value,
-    customSettings: {
-      notes: customNotes.value,
-      style: reportStyle.value
-    }
+    customSettings: {}
   }
   
   console.log('報告配置 (基於新架構):', config)
