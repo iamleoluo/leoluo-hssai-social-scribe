@@ -19,13 +19,7 @@
     <div v-else class="h-full">
       <!-- 人物關係圖使用 vis.js -->
       <VisNetworkGraph 
-        v-if="graphType === 'person'" 
         :graphJson="currentJson" 
-      />
-      <!-- 家庭關係圖使用 Canvas -->
-      <CanvasFamilyTreeGraph 
-        v-else-if="graphType === 'family'" 
-        :graphData="parsedFamilyData" 
       />
     </div>
   </div>
@@ -35,11 +29,10 @@
 import { computed } from 'vue'
 import { usePersonGraphStore } from '@/stores/modules/personGraphStore'
 import VisNetworkGraph from './vis-network/VisNetworkGraph.vue'
-import CanvasFamilyTreeGraph from './family-tree/CanvasFamilyTreeGraph.vue'
 
-// Props
+// Props - 現在只支援 person 類型
 interface Props {
-  graphType: 'person' | 'family'
+  graphType?: 'person'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -48,9 +41,9 @@ const props = withDefaults(defineProps<Props>(), {
 
 const personGraphStore = usePersonGraphStore()
 
-// 根據圖表類型獲取對應數據
-const currentJson = computed(() => personGraphStore.getGraphJson(props.graphType))
-const currentGraphStage = computed(() => personGraphStore.getGraphStage(props.graphType))
+// 只獲取人物關係圖數據
+const currentJson = computed(() => personGraphStore.personGraphJson)
+const currentGraphStage = computed(() => personGraphStore.personGraphStage)
 
 const isValidJson = computed(() => {
   if (!currentJson.value) return false
@@ -62,18 +55,6 @@ const isValidJson = computed(() => {
   }
 })
 
-// 解析家庭關係圖數據
-const parsedFamilyData = computed(() => {
-  if (props.graphType !== 'family' || !currentJson.value || !isValidJson.value) return []
-  try {
-    const parsed = JSON.parse(currentJson.value)
-    console.log('PersonGraphViewer: 解析家庭關係圖數據', parsed)
-    return parsed
-  } catch {
-    console.log('PersonGraphViewer: 解析家庭關係圖數據失敗')
-    return []
-  }
-})
 </script>
 
 <style scoped>

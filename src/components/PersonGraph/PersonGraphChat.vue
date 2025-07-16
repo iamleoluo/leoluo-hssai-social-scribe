@@ -95,9 +95,9 @@ import { useSessionStore } from '@/stores/useSessionStore'
 import { usePersonGraphStore } from '@/stores/modules/personGraphStore'
 import PersonGraphViewer from './PersonGraphViewer.vue'
 
-// Props
+// Props - 現在只支援 person 類型
 interface Props {
-  graphType: 'person' | 'family'
+  graphType?: 'person'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -127,31 +127,20 @@ watch(() => props.graphType, (newType, oldType) => {
   }
 }, { immediate: false })
 
-// 根據圖表類型提供簡單的快速指令
+// 人物關係圖的快速指令
 const quickCommands = computed(() => {
-  if (props.graphType === 'family') {
-    return [
-      '請基於逐字稿重新生成家庭關係圖',
-      '請突出血緣關係和婚姻關係',
-      '新增案主的配偶',
-      '新增案主的父母',
-      '修改人物年齡',
-      '設定存歿狀態'
-    ]
-  } else {
-    return [
-      '請基於逐字稿重新生成通用關係圖',
-      '請簡化人物關係，只保留主要角色',
-      '請加強主要角色之間的連結',
-      '請突出逐字稿中的衝突關係',
-      '請添加逐字稿中提到但遺漏的人物',
-      '請重新組織關係結構使其更清晰'
-    ]
-  }
+  return [
+    '請基於逐字稿重新生成通用關係圖',
+    '請簡化人物關係，只保留主要角色',
+    '請加強主要角色之間的連結',
+    '請突出逐字稿中的衝突關係',
+    '請添加逐字稿中提到但遺漏的人物',
+    '請重新組織關係結構使其更清晰'
+  ]
 })
 
-// 獲取當前圖表的JSON數據
-const currentGraphJson = computed(() => personGraphStore.getGraphJson(props.graphType))
+// 獲取人物關係圖的JSON數據
+const currentGraphJson = computed(() => personGraphStore.personGraphJson)
 
 onMounted(() => {
   // 載入當前圖表類型的對話歷史
