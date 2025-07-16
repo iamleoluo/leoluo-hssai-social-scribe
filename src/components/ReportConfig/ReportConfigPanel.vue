@@ -15,69 +15,134 @@
         </span>
       </template>
       <template #content>
-        <div class="space-y-4">
-          <div class="text-sm text-gray-600 mb-4">
-            選擇需要生成的報告段落（至少選擇一個）
-          </div>
-          
-          <!-- 全選/取消全選 -->
-          <div class="flex items-center gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
-            <Checkbox 
-              v-model="selectAll" 
-              :binary="true"
-              @change="onSelectAllChange"
-            />
-            <label class="font-medium text-gray-700">全選段落</label>
-          </div>
-          
-          <!-- 按分類顯示段落選項 -->
-          <div class="space-y-6">
-            <div v-for="category in categories" :key="category" class="border rounded-lg p-4 bg-gray-50">
-              <div class="flex items-center justify-between mb-3">
-                <h4 class="font-medium text-gray-800">{{ category }}</h4>
-                <Button
-                  :label="isCategorySelected(category) ? '取消全選' : '全選'"
-                  @click="toggleCategory(category)"
-                  class="p-button-text p-button-sm"
-                  size="small"
-                />
+        <div class="space-y-6">
+          <!-- 預設包含段落說明 -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <i class="pi pi-info-circle text-blue-600"></i>
+              <h4 class="font-medium text-blue-800">以下段落將預設包含在報告中</h4>
+            </div>
+            <p class="text-sm text-blue-700 mb-4">
+              基於基本資訊整理需求與潛在安全性問題評估，以下段落為社工訪視報告必要內容，系統將自動包含。
+            </p>
+            
+            <!-- 按段落分組顯示 -->
+            <div class="space-y-4">
+              <!-- 一、主述議題 -->
+              <div class="bg-white border border-blue-100 rounded-lg p-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="pi pi-exclamation-triangle text-blue-600"></i>
+                  <h5 class="font-medium text-blue-800">一、主述議題</h5>
+                </div>
+                <p class="text-xs text-blue-700 mb-2">建立案件基本脈絡，確保服務導向正確</p>
+                <div class="space-y-1">
+                  <div v-for="section in getRequiredSectionsByGroup('main')" :key="section.value" class="text-sm text-blue-800 pl-4">
+                    {{ section.name }}
+                  </div>
+                </div>
               </div>
               
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div 
-                  v-for="section in getSectionsForCategory(category)" 
-                  :key="section.value"
-                  :class="[
-                    'flex items-start gap-3 p-3 border rounded-lg transition-colors',
-                    section.required 
-                      ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' 
-                      : 'bg-white hover:bg-gray-50 cursor-pointer'
-                  ]"
-                  @click="!section.required && toggleSection(section.value)"
-                >
-                  <Checkbox 
-                    v-model="selectedSections" 
-                    :value="section.value"
-                    :disabled="section.required"
-                    @change="onSectionChange"
-                    class="mt-1"
-                    :binary="false"
+              <!-- 二、個案概況 -->
+              <div class="bg-white border border-blue-100 rounded-lg p-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="pi pi-users text-blue-600"></i>
+                  <h5 class="font-medium text-blue-800">二、個案概況</h5>
+                </div>
+                <p class="text-xs text-blue-700 mb-2">完整了解家庭結構與背景，為後續評估奠定基礎</p>
+                <div class="space-y-1">
+                  <div v-for="section in getRequiredSectionsByGroup('case_overview')" :key="section.value" class="text-sm text-blue-800 pl-4">
+                    {{ getSectionDisplayName(section.name) }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 三、個案狀況 - 人身安全 -->
+              <div class="bg-white border border-blue-100 rounded-lg p-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="pi pi-shield text-blue-600"></i>
+                  <h5 class="font-medium text-blue-800">三、個案狀況 - 人身安全</h5>
+                </div>
+                <p class="text-xs text-blue-700 mb-2">風險評估必要項目，確保服務對象安全</p>
+                <div class="space-y-1">
+                  <div v-for="section in getRequiredSectionsByGroup('safety')" :key="section.value" class="text-sm text-blue-800 pl-4">
+                    {{ getSectionDisplayName(section.name) }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 四、需求與評估 -->
+              <div class="bg-white border border-blue-100 rounded-lg p-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="pi pi-chart-line text-blue-600"></i>
+                  <h5 class="font-medium text-blue-800">四、需求與評估</h5>
+                </div>
+                <p class="text-xs text-blue-700 mb-2">專業評估與服務規劃，確保介入有效性</p>
+                <div class="space-y-1">
+                  <div v-for="section in getRequiredSectionsByGroup('assessment')" :key="section.value" class="text-sm text-blue-800 pl-4">
+                    {{ getSectionDisplayName(section.name) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 額外選擇段落 -->
+          <div>
+            <div class="flex items-center gap-2 mb-4">
+              <i class="pi pi-plus-circle text-gray-600"></i>
+              <h4 class="font-medium text-gray-800">三、個案狀況 - 其他評估項目</h4>
+              <span class="text-sm text-gray-500">（可依個案需求選擇）</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">
+              社工可依據個案特性與服務需求，選擇適合的評估面向進行深入了解。
+            </p>
+            
+            <!-- 全選/取消全選 (僅針對可選項目) -->
+            <div class="flex items-center gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
+              <Checkbox 
+                v-model="selectAllOptional" 
+                :binary="true"
+                @change="onSelectAllOptionalChange"
+              />
+              <label class="font-medium text-gray-700">全選其他評估項目</label>
+            </div>
+            
+            <!-- 按分類顯示可選段落選項 -->
+            <div class="space-y-6">
+              <div v-for="category in optionalCategories" :key="category" class="border rounded-lg p-4 bg-gray-50">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-medium text-gray-800">{{ category }}</h4>
+                  <Button
+                    :label="isCategorySelected(category) ? '取消全選' : '全選'"
+                    @click="toggleCategory(category)"
+                    class="p-button-text p-button-sm"
+                    size="small"
                   />
-                  <div class="flex-1 min-w-0">
-                    <label :class="[
-                      'text-sm font-medium cursor-pointer block flex items-center gap-2',
-                      section.required ? 'text-blue-800' : 'text-gray-800'
-                    ]">
-                      <i :class="[section.icon, section.required ? 'text-blue-600' : 'text-gray-600']"></i>
-                      {{ section.name }}
-                      <span v-if="section.required" class="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">必選</span>
-                    </label>
-                    <p :class="[
-                      'text-xs mt-1 line-clamp-2',
-                      section.required ? 'text-blue-700' : 'text-gray-600'
-                    ]">
-                      {{ section.description }}
-                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div 
+                    v-for="section in getSectionsForCategory(category)" 
+                    :key="section.value"
+                    class="flex items-start gap-3 p-3 border rounded-lg transition-colors bg-white hover:bg-gray-50 cursor-pointer"
+                    @click="toggleSection(section.value)"
+                  >
+                    <Checkbox 
+                      v-model="selectedSections" 
+                      :value="section.value"
+                      @change="onSectionChange"
+                      class="mt-1"
+                      :binary="false"
+                    />
+                    <div class="flex-1 min-w-0">
+                      <label class="text-sm font-medium cursor-pointer block flex items-center gap-2 text-gray-800">
+                        <i :class="[section.icon, 'text-gray-600']"></i>
+                        {{ section.name }}
+                      </label>
+                      <p class="text-xs mt-1 line-clamp-2 text-gray-600">
+                        {{ section.description }}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -130,41 +195,6 @@
             </div>
           </div>
           
-          <!-- 關係圖自動生成設定 -->
-          <div class="border-t pt-4">
-            <label class="block text-sm font-medium text-gray-700 mb-3">
-              自動生成關係圖設定
-            </label>
-            <div class="space-y-3">
-              <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <div class="flex items-center gap-3">
-                  <i class="pi pi-users text-blue-600"></i>
-                  <div>
-                    <div class="font-medium text-blue-800">人物關係圖</div>
-                    <div class="text-xs text-blue-600">分析人際關係、社會網絡、互動模式</div>
-                  </div>
-                </div>
-                <Checkbox 
-                  v-model="autoGeneratePersonGraph" 
-                  :binary="true"
-                />
-              </div>
-              
-              <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div class="flex items-center gap-3">
-                  <i class="pi pi-home text-green-600"></i>
-                  <div>
-                    <div class="font-medium text-green-800">家庭關係圖</div>
-                    <div class="text-xs text-green-600">專注家庭結構、血緣關係、婚姻狀況</div>
-                  </div>
-                </div>
-                <Checkbox 
-                  v-model="autoGenerateFamilyGraph" 
-                  :binary="true"
-                />
-              </div>
-            </div>
-          </div>
         </div>
       </template>
     </Card>
@@ -396,20 +426,21 @@ const availableSections = ref([
 // 響應式狀態
 const selectedSections = ref<string[]>([])
 const selectAll = ref(false)
+const selectAllOptional = ref(false)
 const customNotes = ref('')
 const reportStyle = ref('formal')
 
-// 計算屬性 - 按照社工訪視紀錄標準順序排列分類
-const categories = computed(() => {
-  // 定義分類的顯示順序 - 對應標準社工架構
+// 計算屬性 - 只顯示可選分類
+const optionalCategories = computed(() => {
+  // 只顯示非必選的分類
   const categoryOrder = [
-    '必須項目',
-    '個案概況(必須)',
-    '個案狀況(可選)',
-    '需求與評估'
+    '個案狀況(可選)'
   ]
   
-  const cats = [...new Set(availableSections.value.map(s => s.category))]
+  const cats = [...new Set(availableSections.value
+    .filter(s => !s.required)
+    .map(s => s.category)
+  )]
   
   // 按預定義順序排序，未定義的放在最後
   return cats.sort((a, b) => {
@@ -422,6 +453,52 @@ const categories = computed(() => {
     return indexA - indexB
   })
 })
+
+// 取得必選段落
+const getRequiredSections = () => {
+  return availableSections.value
+    .filter(section => section.required)
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+}
+
+// 按組別取得必選段落
+const getRequiredSectionsByGroup = (group: string) => {
+  const groupMapping = {
+    'main': ['必須項目'],
+    'case_overview': ['個案概況(必須)'],
+    'safety': ['個案狀況(可選)'], // 人身安全在個案狀況分類中但是必選
+    'assessment': ['需求與評估']
+  }
+  
+  const targetCategories = groupMapping[group] || []
+  
+  return availableSections.value
+    .filter(section => {
+      if (group === 'safety') {
+        // 特別處理人身安全項目
+        return section.value === 'safety_security_status' && section.required
+      }
+      return section.required && targetCategories.includes(section.category)
+    })
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+}
+
+// 取得段落顯示名稱，移除重複的主分類標題
+const getSectionDisplayName = (fullName: string) => {
+  // 移除 "二、個案概況 - " 前綴，只保留子項目名稱
+  if (fullName.includes('二、個案概況 - ')) {
+    return fullName.replace('二、個案概況 - ', '')
+  }
+  // 移除 "三、個案狀況 - " 前綴，只保留子項目名稱
+  if (fullName.includes('三、個案狀況 - ')) {
+    return fullName.replace('三、個案狀況 - ', '')
+  }
+  // 移除 "四、需求與評估 - " 前綴，只保留子項目名稱
+  if (fullName.includes('四、需求與評估 - ')) {
+    return fullName.replace('四、需求與評估 - ', '')
+  }
+  return fullName
+}
 
 const configValidation = computed(() => {
   // 檢查必選項目
@@ -460,6 +537,27 @@ const onSelectAllChange = () => {
   }
 }
 
+// 全選額外段落的處理
+const onSelectAllOptionalChange = () => {
+  const optionalSections = availableSections.value
+    .filter(s => !s.required)
+    .map(s => s.value)
+  
+  if (selectAllOptional.value) {
+    // 加入所有可選段落，但保留必選段落
+    const requiredSections = availableSections.value
+      .filter(s => s.required)
+      .map(s => s.value)
+    selectedSections.value = [...requiredSections, ...optionalSections]
+  } else {
+    // 只保留必選段落
+    selectedSections.value = selectedSections.value.filter(sectionId => {
+      const section = availableSections.value.find(s => s.value === sectionId)
+      return section?.required || false
+    })
+  }
+}
+
 const onSectionChange = () => {
   selectAll.value = selectedSections.value.length === availableSections.value.length
 }
@@ -467,7 +565,7 @@ const onSectionChange = () => {
 // 新增分類相關方法
 const getSectionsForCategory = (category: string) => {
   return availableSections.value
-    .filter(section => section.category === category)
+    .filter(section => section.category === category && !section.required)
     .sort((a, b) => (a.order || 0) - (b.order || 0)) // 按order字段排序
 }
 
@@ -501,7 +599,7 @@ const toggleCategory = (category: string) => {
 }
 
 const toggleSection = (sectionValue: string) => {
-  // 檢查是否為必選項目
+  // 只處理可選項目
   const section = availableSections.value.find(s => s.value === sectionValue)
   if (section?.required) {
     return // 必選項目不允許取消選擇
@@ -519,6 +617,7 @@ const toggleSection = (sectionValue: string) => {
 const resetConfig = () => {
   selectedSections.value = []
   selectAll.value = false
+  selectAllOptional.value = false
   customNotes.value = ''
   reportStyle.value = 'formal'
   
@@ -750,6 +849,17 @@ const generateFamilyGraphFromReport = async () => {
 // 監聽段落選擇變化
 watch(selectedSections, () => {
   selectAll.value = selectedSections.value.length === availableSections.value.length
+  
+  // 更新可選項目的全選狀態
+  const optionalSections = availableSections.value
+    .filter(s => !s.required)
+    .map(s => s.value)
+  
+  const selectedOptional = selectedSections.value.filter(sectionId => 
+    optionalSections.includes(sectionId)
+  )
+  
+  selectAllOptional.value = optionalSections.length > 0 && selectedOptional.length === optionalSections.length
 })
 
 // 組件初始化時確保必選項目被選中
