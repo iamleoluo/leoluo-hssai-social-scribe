@@ -117,15 +117,6 @@ const isLoading = ref(false)
 // 根據圖表類型分別儲存對話歷史
 const chatHistory = ref<ChatMessage[]>([])
 
-// 監聽圖表類型變化，切換對話歷史
-watch(() => props.graphType, (newType, oldType) => {
-  if (oldType && newType !== oldType) {
-    // 保存當前對話歷史
-    saveChatHistory(oldType)
-    // 載入新類型的對話歷史
-    loadChatHistory(newType)
-  }
-}, { immediate: false })
 
 // 人物關係圖的快速指令
 const quickCommands = computed(() => {
@@ -148,14 +139,11 @@ onMounted(() => {
   
   // 如果沒有對話歷史且有現有的關係圖，添加歡迎消息
   if (chatHistory.value.length === 0 && currentGraphJson.value) {
-    const graphTypeName = props.graphType === 'person' ? '通用關係圖' : '家庭關係圖'
-    const suggestions = props.graphType === 'family' 
-      ? '• 調整家庭結構\n• 添加或移除家庭成員\n• 修改血緣/婚姻關係\n• 重新組織世代層級'
-      : '• 調整人物關係\n• 添加或移除角色\n• 修改關係強度\n• 重新組織結構'
+    const suggestions = '• 調整人物關係\n• 添加或移除角色\n• 修改關係強度\n• 重新組織結構'
     
     chatHistory.value.push({
       role: 'assistant',
-      content: `我已經為您載入了現有的${graphTypeName}。您可以告訴我需要如何修改，例如：\n${suggestions}`,
+      content: `我已經為您載入了現有的通用關係圖。您可以告訴我需要如何修改，例如：\n${suggestions}`,
       timestamp: new Date()
     })
     
@@ -165,7 +153,7 @@ onMounted(() => {
 })
 
 // 對話歷史管理方法
-function loadChatHistory(graphType: 'person' | 'family') {
+function loadChatHistory(graphType: 'person') {
   const storageKey = `chatHistory_${graphType}_${sessionStore.sessionId}`
   const saved = localStorage.getItem(storageKey)
   if (saved) {
@@ -183,7 +171,7 @@ function loadChatHistory(graphType: 'person' | 'family') {
   }
 }
 
-function saveChatHistory(graphType: 'person' | 'family') {
+function saveChatHistory(graphType: 'person') {
   const storageKey = `chatHistory_${graphType}_${sessionStore.sessionId}`
   localStorage.setItem(storageKey, JSON.stringify(chatHistory.value))
 }
@@ -212,7 +200,7 @@ async function sendMessage() {
         currentGraph: currentGraphJson.value,
         transcript: sessionStore.transcriptText,
         sessionId: sessionStore.sessionId,
-        graphType: props.graphType  // 新增圖表類型參數
+        graphType: 'person'  // 固定為人物關係圖
       })
     })
     
