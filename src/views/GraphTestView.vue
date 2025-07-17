@@ -20,15 +20,7 @@
               >
               人物關係圖 (vis.js)
             </label>
-            <label class="flex items-center">
-              <input 
-                type="radio" 
-                v-model="selectedGraphType" 
-                value="family" 
-                class="mr-2"
-              >
-              家庭關係圖 (FamilyTree.js)
-            </label>
+            <!-- 移除家庭關係圖選項 -->
           </div>
         </div>
         
@@ -56,13 +48,7 @@
         >
           清除數據
         </button>
-        <button 
-          @click="loadFamilyTreeTestData" 
-          class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
-          v-if="selectedGraphType === 'family'"
-        >
-          載入測試家族樹數據
-        </button>
+        <!-- 移除家庭關係圖測試按鈕 -->
           </div>
         </div>
       </div>
@@ -102,20 +88,7 @@
           severity="secondary"
           outlined
         />
-        <Button 
-          label="測試家庭關係圖" 
-          icon="pi pi-home"
-          @click="handleTestFamilyGraph"
-          severity="success"
-          outlined
-        />
-        <Button 
-          label="載入 FamilyTree.js 測試數據" 
-          icon="pi pi-download"
-          @click="loadFamilyTreeTestData"
-          severity="info"
-          outlined
-        />
+        <!-- 移除家庭關係圖測試按鈕 -->
       </div>
     </div>
     
@@ -206,10 +179,10 @@ const personGraphStore = usePersonGraphStore()
 const sessionStore = useSessionStore()
 
 // 狀態管理
-const selectedGraphType = ref<'person' | 'family'>('person')
+const selectedGraphType = ref<'person'>('person')
 const isLoading = ref(false)
 const sampleText = ref('')
-const graphData = computed(() => personGraphStore.getGraphJson(selectedGraphType.value))
+const graphData = computed(() => personGraphStore.personGraphJson)
 
 // 測試數據樣本
 const familyTreeTestData = [
@@ -276,14 +249,12 @@ const familyTreeTestData = [
   }
 ]
 const sampleDataTemplates = {
-  person: `案主王小美，35歲女性，已婚，育有一子一女（8歲和5歲）。目前面臨工作壓力過大的問題，經常與先生王大明發生爭執。王小美的母親住在附近，經常來幫忙照顧孩子，但有時會對教養方式有不同意見。王小美提到她與同事關係還算不錯，但覺得缺乏深度的友誼支持。先生王大明工作穩定，但工時較長，回家後較少參與家務和育兒。兩個孩子在學校表現正常，但哥哥最近開始出現注意力不集中的問題。此外，王小美還提到她有一個好朋友李小華，會定期聯絡並提供情感支持。`,
-  
-  family: `案主張小明今年30歲，與妻子林小玉結婚3年，育有一個2歲的兒子張小寶。張小明的父親張大華已退休，母親王美麗是家庭主婦，兩老住在同一社區。林小玉的父母林老爸和陳老媽住在南部，偶爾會來探望。張小明還有一個妹妹張小芳，已婚並育有一女，住在附近。家庭主要經濟來源是張小明的工作收入，林小玉目前在家照顧孩子。張大華會協助接送孫子，王美麗則會幫忙準備晚餐。整個大家庭關係和睦，但偶爾會因為教養方式有不同意見。`
+  person: `案主王小美，35歲女性，已婚，育有一子一女（8歲和5歲）。目前面臨工作壓力過大的問題，經常與先生王大明發生爭執。王小美的母親住在附近，經常來幫忙照顧孩子，但有時會對教養方式有不同意見。王小美提到她與同事關係還算不錯，但覺得缺乏深度的友誼支持。先生王大明工作穩定，但工時較長，回家後較少參與家務和育兒。兩個孩子在學校表現正常，但哥哥最近開始出現注意力不集中的問題。此外，王小美還提到她有一個好朋友李小華，會定期聯絡並提供情感支持。`
 }
 
 // 載入測試數據
 const loadSampleData = () => {
-  sampleText.value = sampleDataTemplates[selectedGraphType.value]
+  sampleText.value = sampleDataTemplates.person
 }
 
 // 生成圖表
@@ -356,17 +327,11 @@ const generateGraph = async () => {
 // 清除數據
 const clearData = () => {
   personGraphStore.setGraphJson(selectedGraphType.value, '')
-  personGraphStore.setGraphStage(selectedGraphType.value, 'idle')
+  personGraphStore.setPersonGraphStage('idle')
   sampleText.value = ''
 }
 
-// 載入FamilyTree測試數據
-const loadFamilyTreeTestData = () => {
-  const testDataJson = JSON.stringify(familyTreeTestData)
-  personGraphStore.setFamilyGraphJson(testDataJson)
-  personGraphStore.setFamilyGraphStage('done')
-  console.log('已載入FamilyTree測試數據:', familyTreeTestData)
-}
+// 移除家庭關係圖測試數據載入功能
 
 // 格式化 JSON 顯示
 const formatJson = (jsonString: string) => {
@@ -511,17 +476,7 @@ const handleTestFamilyGraph = async () => {
       }
     }
     
-    // 清理 JSON 內容
-    const cleanedContent = content.replace(/```json\s*/gmi, '').replace(/```\s*$/gm, '').trim()
-    
-    personGraphStore.setFamilyGraphJson(cleanedContent)
-    personGraphStore.setFamilyGraphStage('done')
-    
-    console.log('手動測試家庭關係圖完成:', cleanedContent.substring(0, 200))
-  } catch (err) {
-    console.error('手動測試家庭關係圖失敗:', err)
-    personGraphStore.setFamilyGraphStage('done')
-  }
+// 移除家庭關係圖測試功能
 }
 </script>
 

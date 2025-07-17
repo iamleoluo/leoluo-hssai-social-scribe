@@ -251,11 +251,11 @@ async function sendMessage() {
         // 驗證 JSON 格式
         const parsed = JSON.parse(newGraphJson)
         console.log(`PersonGraphChat: 更新${props.graphType}關係圖數據`, parsed)
-        personGraphStore.setGraphJson(props.graphType, newGraphJson)
+        personGraphStore.setPersonGraphJson(newGraphJson)
         console.log(`PersonGraphChat: 已更新Store中的${props.graphType}數據`)
       } catch (e) {
         console.error('接收到的 JSON 格式錯誤:', newGraphJson)
-        const graphTypeName = props.graphType === 'person' ? '人物關係圖' : '家庭關係圖'
+        const graphTypeName = '人物關係圖'
         chatHistory.value.push({
           role: 'assistant',
           content: `抱歉，生成的${graphTypeName}格式有誤，請重試。`,

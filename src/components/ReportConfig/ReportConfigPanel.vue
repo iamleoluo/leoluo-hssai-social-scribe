@@ -222,7 +222,7 @@ const cleanJsonContent = (content: string): string => {
 const sessionStore = useSessionStore()
 const personGraphStore = usePersonGraphStore()
 const { transcriptText, reportText, sessionId, autoGeneratePersonGraph } = storeToRefs(sessionStore)
-const { autoGenerateFamilyGraph } = storeToRefs(personGraphStore)
+// 移除家庭關係圖相關引用
 
 // 預設模板
 const DEFAULT_TEMPLATE = '通用社工評估報告'
@@ -654,9 +654,7 @@ const generateReportWithConfig = async (config: any) => {
       await generatePersonGraphFromReport()
     }
     
-    if (autoGenerateFamilyGraph.value) {
-      await generateFamilyGraphFromReport()
-    }
+    // 移除家庭關係圖自動生成
   } catch (err) {
     console.error('生成報告失敗', err)
     sessionStore.setReportText('[生成失敗，請稍後再試]')
@@ -728,68 +726,7 @@ const generatePersonGraphFromReport = async () => {
   }
 }
 
-// 自動生成家庭關係圖
-const generateFamilyGraphFromReport = async () => {
-  const reportTextValue = reportText.value?.trim()
-  if (!reportTextValue) {
-    console.warn('沒有報告內容，無法生成家庭關係圖')
-    return
-  }
-
-  personGraphStore.setFamilyGraphStage('generating')
-  personGraphStore.setFamilyGraphJson('')
-
-  try {
-    const response = await fetch('/api/PersonGraph', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        text: reportTextValue,
-        graphType: 'family',
-        sessionId: sessionId.value
-      })
-    })
-    
-    if (!response.body) {
-      personGraphStore.setFamilyGraphStage('done')
-      return
-    }
-    
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder('utf-8')
-    let buffer = ''
-    let content = ''
-    
-    while (true) {
-      const { value, done } = await reader.read()
-      if (done) break
-      
-      buffer += decoder.decode(value, { stream: true })
-      let lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-      
-      for (const line of lines) {
-        if (!line.trim()) continue
-        try {
-          const obj = JSON.parse(line)
-          content += obj.content
-        } catch (e) {
-          // 忽略解析錯誤
-        }
-      }
-    }
-    
-    // 清理 JSON 內容
-    const cleanedContent = cleanJsonContent(content)
-    
-    personGraphStore.setFamilyGraphJson(cleanedContent)
-    personGraphStore.setFamilyGraphStage('done')
-    console.log('家庭關係圖自動生成完成')
-  } catch (err) {
-    console.error('生成家庭關係圖失敗', err)
-    personGraphStore.setFamilyGraphStage('done')
-  }
-}
+// 移除家庭關係圖生成功能
 
 // 監聽段落選擇變化
 watch(selectedSections, () => {
