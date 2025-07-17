@@ -63,11 +63,7 @@
         </template>
         <template #content>
           <div class="space-y-4">
-            <!-- 報告摘要 -->
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <h4 class="font-medium text-gray-800 mb-2">報告摘要</h4>
-              <p class="text-gray-600 text-sm">{{ reportSummary }}</p>
-            </div>
+            <!-- 移除報告摘要 -->
 
 
 
@@ -270,14 +266,7 @@ const treatmentContent = computed(() => treatmentPlan.value.content)
 const isEditing = computed(() => treatmentPlan.value.isEditing)
 const generatedAt = computed(() => treatmentPlan.value.generatedAt)
 // 移除重複的 hasTreatmentPlan 計算屬性，使用 store 中的
-const reportSummary = computed(() => {
-  const report = reportText.value?.trim()
-  if (!report) return '尚無報告內容'
-  
-  // 簡單提取前200字作為摘要
-  const summary = report.substring(0, 200)
-  return summary.length < report.length ? summary + '...' : summary
-})
+// 移除報告摘要計算屬性
 
 // 方法
 const extractMainIssue = () => {
