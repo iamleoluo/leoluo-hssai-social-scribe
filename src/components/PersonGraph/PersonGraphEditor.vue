@@ -3,7 +3,7 @@
     <!-- 標題區域 -->
     <div class="mb-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-bold">通用關係圖分析</h2>
+        <h2 class="text-lg font-bold">人物關係圖分析</h2>
       </div>
       
       <!-- 類型說明 -->

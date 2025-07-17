@@ -1,6 +1,6 @@
 <template>
   <div class="h-full flex flex-col p-4">
-    <h2 class="text-lg font-bold mb-4">{{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }}智能編輯</h2>
+    <h2 class="text-lg font-bold mb-4">人物關係圖進階編輯</h2>
     
     <!-- 上下文信息顯示 -->
     <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -12,7 +12,7 @@
         </div>
         <div class="flex items-center">
           <span class="w-2 h-2 rounded-full mr-2" :class="currentGraphJson ? 'bg-green-500' : 'bg-gray-400'"></span>
-          {{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }} ({{ currentGraphJson ? '已載入' : '無' }})
+          人物關係圖 ({{ currentGraphJson ? '已載入' : '無' }})
         </div>
         <div class="flex items-center">
           <span class="w-2 h-2 rounded-full mr-2" :class="sessionStore.reportText ? 'bg-green-500' : 'bg-gray-400'"></span>
@@ -24,7 +24,7 @@
     <!-- 對話歷史區域 -->
     <div class="border rounded-lg p-4 mb-4 flex-1 overflow-y-auto bg-gray-50">
       <div v-if="chatHistory.length === 0" class="text-gray-500 text-center py-8">
-        開始對話來編輯您的{{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }}...
+        開始對話來編輯您的人物關係圖...
       </div>
       
       <div v-for="(message, index) in chatHistory" :key="index" class="mb-4">
@@ -121,7 +121,7 @@ const chatHistory = ref<ChatMessage[]>([])
 // 人物關係圖的快速指令
 const quickCommands = computed(() => {
   return [
-    '請基於逐字稿重新生成通用關係圖',
+    '請基於逐字稿重新生成人物關係圖',
     '請簡化人物關係，只保留主要角色',
     '請加強主要角色之間的連結',
     '請突出逐字稿中的衝突關係',
@@ -143,7 +143,7 @@ onMounted(() => {
     
     chatHistory.value.push({
       role: 'assistant',
-      content: `我已經為您載入了現有的通用關係圖。您可以告訴我需要如何修改，例如：\n${suggestions}`,
+      content: `我已經為您載入了現有的人物關係圖。您可以告訴我需要如何修改，例如：\n${suggestions}`,
       timestamp: new Date()
     })
     

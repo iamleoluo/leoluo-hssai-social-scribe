@@ -3,13 +3,13 @@
     <div v-if="currentGraphStage === 'generating'" class="flex-1 flex items-center justify-center text-gray-500">
       <div class="text-center">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-        <div>正在生成{{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }}...</div>
+        <div>正在生成人物關係圖...</div>
       </div>
     </div>
     <div v-else-if="!currentJson || !currentJson.trim()" class="flex-1 flex items-center justify-center text-gray-400">
       <div class="text-center">
         <i :class="graphType === 'person' ? 'pi pi-users' : 'pi pi-home'" class="text-4xl mb-2"></i>
-        <div>尚未有{{ graphType === 'person' ? '通用關係圖' : '家庭關係圖' }}資料</div>
+        <div>尚未有人物關係圖資料</div>
       </div>
     </div>
     <div v-else-if="!isValidJson" class="h-full flex flex-col">
