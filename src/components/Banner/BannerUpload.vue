@@ -6,7 +6,7 @@
     <!-- 背景圖層 -->
     <div
       class="absolute inset-0 z-0"
-      :style="`background-image: url(${bgUrl}); background-size: cover; background-position: center;`"
+      :style="`background-image: url(${bgUrl}); background-size: cover; background-position: top;`"
     ></div>
 
     <!-- 遮罩層 -->
