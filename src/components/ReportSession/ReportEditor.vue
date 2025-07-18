@@ -11,14 +11,14 @@
     <div v-else>
       <div class="w-full mx-auto flex justify-center space-x-4">
         <button
-          class="flex justify-center items-center text-center mt-4 bg-amber-500 text-white px-4 py-2 rounded hover:bg-amber-700"
+          class="flex justify-center items-center text-center mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
           @click="download"
         >
           <img src="@/assets/downloads.png" alt="icon" class="h-5 mr-1" />
           下載報告
         </button>
         <button
-          class="flex justify-center items-center text-center mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+          class="flex justify-center items-center text-center mt-4 bg-amber-500 text-white px-4 py-2 rounded hover:bg-amber-700"
           @click="goToTreatmentPlan"
           :disabled="!hasValidReport"
         >
