@@ -8,22 +8,33 @@
     <div v-if="sessionStore.reportStage === 'generating'" class="text-gray-500 mt-2">
       正在產生報告初稿...
     </div>
-    <div v-else>
-      <div class="w-full mx-auto flex justify-center space-x-4">
-        <button
-          class="flex justify-center items-center text-center mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+    <!-- 操作按鈕 -->
+    <div v-else class="flex justify-between items-center pt-4 border-t">
+      <div class="text-sm text-gray-500">
+        <span v-if="hasValidReport" class="text-green-600 flex items-center gap-1">
+          <i class="pi pi-check-circle"></i>
+          報告生成完成，可以下載或進行下一步
+        </span>
+        <span v-else class="text-orange-600 flex items-center gap-1">
+          <i class="pi pi-exclamation-triangle"></i>
+          報告尚未生成完成
+        </span>
+      </div>
+      
+      <div class="flex gap-3">
+        <Button 
+          label="下載報告" 
+          icon="pi pi-download" 
+          severity="secondary" 
           @click="download"
-        >
-          <img src="@/assets/downloads.png" alt="icon" class="h-5 mr-1" />
-          下載報告
-        </button>
-        <button
-          class="flex justify-center items-center text-center mt-4 bg-amber-500 text-white px-4 py-2 rounded hover:bg-amber-700"
-          @click="goToTreatmentPlan"
+          outlined
+        />
+        <Button 
+          label="下一步：處遇計畫" 
+          icon="pi pi-arrow-right" 
           :disabled="!hasValidReport"
-        >
-          下一步：處遇計畫
-        </button>
+          @click="goToTreatmentPlan"
+        />
       </div>
     </div>
   </div>
@@ -31,7 +42,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Message from 'primevue/message'
+import Button from 'primevue/button'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { storeToRefs } from 'pinia'
 import { reportStageMessageMap, templateMessageMap } from '@/utils/stageMessages'
