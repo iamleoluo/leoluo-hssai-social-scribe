@@ -17,6 +17,13 @@
           <img src="@/assets/downloads.png" alt="icon" class="h-5 mr-1" />
           下載報告
         </button>
+        <button
+          class="flex justify-center items-center text-center mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+          @click="goToTreatmentPlan"
+          :disabled="!hasValidReport"
+        >
+          下一步：處遇計畫
+        </button>
       </div>
     </div>
   </div>
@@ -31,6 +38,10 @@ import { reportStageMessageMap, templateMessageMap } from '@/utils/stageMessages
 
 const sessionStore = useSessionStore()
 const { reportText, reportStage, selectedTemplate } = storeToRefs(sessionStore)
+
+const hasValidReport = computed(() => {
+  return reportText.value.trim() && reportStage.value === 'done'
+})
 
 const stageMessage = computed(() => reportStageMessageMap[reportStage.value])
 const templateMessages = computed(() => {
@@ -54,5 +65,9 @@ const download = () => {
   a.click()
 
   URL.revokeObjectURL(url)
+}
+
+const goToTreatmentPlan = () => {
+  sessionStore.setActiveTab(3) // 跳轉到處遇計畫分頁
 }
 </script>
